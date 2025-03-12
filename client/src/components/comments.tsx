@@ -46,7 +46,7 @@ export function Comments({ currentDate }: CommentsProps) {
       await apiRequest('POST', '/api/comments', {
         userId: user?.id,
         content,
-        date: currentDate
+        date: currentDate.toISOString() // Ensure date is properly formatted
       });
     },
     onSuccess: () => {
@@ -79,7 +79,7 @@ export function Comments({ currentDate }: CommentsProps) {
   return (
     <div className="mt-8">
       <h3 className="text-lg font-medium mb-4">Comments</h3>
-      
+
       {/* Comment list */}
       <div className="space-y-4 mb-6">
         {isLoading ? (
