@@ -43,12 +43,13 @@ export function Comments({ currentDate }: CommentsProps) {
   // Mutation to add a new comment
   const mutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!user?.id) throw new Error('User not found');
+      if (!user?.id || !username) throw new Error('User not found');
 
       const res = await apiRequest('POST', '/api/comments', {
-        userId: Number(user.id), // Ensure userId is a number
-        content: content.trim(), // Ensure content is trimmed
-        date: currentDate.toISOString() // Send date as ISO string
+        userId: Number(user.id),
+        username: username, // Include username in the comment
+        content: content.trim(),
+        date: currentDate.toISOString()
       });
       return res.json();
     },
@@ -61,7 +62,7 @@ export function Comments({ currentDate }: CommentsProps) {
       });
     },
     onError: (error) => {
-      console.error('Comment error:', error); // Debug log
+      console.error('Comment error:', error);
       toast({
         title: "Error",
         description: "Failed to add comment",
@@ -94,6 +95,9 @@ export function Comments({ currentDate }: CommentsProps) {
               <CardContent className="p-4">
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
+                    <p className="text-sm font-medium text-primary mb-1">
+                      {comment.username}
+                    </p>
                     <p className="text-sm">{comment.content}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {new Date(comment.createdAt).toLocaleTimeString()}

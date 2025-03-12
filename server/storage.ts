@@ -86,9 +86,9 @@ export class MemStorage implements IStorage {
     const comment: Comment = {
       ...insertComment,
       id,
-      userId: Number(insertComment.userId), // Ensure userId is a number
+      userId: Number(insertComment.userId),
       createdAt: new Date(),
-      date: new Date(insertComment.date) // Ensure date is a Date object
+      date: new Date(insertComment.date)
     };
     this.comments.set(id, comment);
     return comment;
@@ -97,7 +97,7 @@ export class MemStorage implements IStorage {
   async getCommentsByDate(date: Date): Promise<Comment[]> {
     const targetDate = format(date, 'yyyy-MM-dd');
     return Array.from(this.comments.values()).filter(comment => {
-      const commentDate = format(comment.createdAt, 'yyyy-MM-dd'); 
+      const commentDate = format(comment.date, 'yyyy-MM-dd');
       return commentDate === targetDate;
     });
   }

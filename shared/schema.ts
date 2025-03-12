@@ -18,6 +18,7 @@ export const photos = pgTable("photos", {
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   userId: serial("user_id").references(() => users.id),
+  username: varchar("username", { length: 50 }).notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   date: timestamp("date").notNull(), // The day this comment belongs to
@@ -35,6 +36,7 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
 
 export const insertCommentSchema = createInsertSchema(comments).pick({
   userId: true,
+  username: true,
   content: true,
   date: true,
 });
