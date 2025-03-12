@@ -11,6 +11,20 @@ interface PhotoUploadProps {
   onPhotoReplaced?: () => void;
 }
 
+async function apiRequest(method: string, url: string, body?: FormData | object) {
+  const res = await fetch(url, {
+    method,
+    headers: body instanceof FormData ? undefined : { 'Content-Type': 'application/json' },
+    body: body instanceof FormData ? body : JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`API request failed: ${errorText}`);
+  }
+  return res;
+}
+
+
 export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: PhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -39,18 +53,10 @@ export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: Photo
 
       // If we're replacing a photo, delete the old one first
       if (photoToReplace) {
-        await fetch(`/api/photos/${photoToReplace}`, { method: 'DELETE' });
+        await apiRequest('DELETE', `/api/photos/${photoToReplace}`);
       }
 
-      const res = await fetch('/api/photos', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error('Upload failed');
-      }
-
+      const res = await apiRequest('POST', '/api/photos', formData);
       return res.json();
     },
     onSuccess: () => {
