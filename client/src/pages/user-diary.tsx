@@ -1,6 +1,6 @@
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { add, sub } from 'date-fns';
 import { PhotoGrid } from '@/components/photo-grid';
 import { DateNavigation } from '@/components/date-navigation';
@@ -11,7 +11,6 @@ import { type Photo } from '@shared/schema';
 export default function UserDiary() {
   const { username } = useParams();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
 
   const { data: photos, isLoading } = useQuery<Photo[]>({
@@ -33,10 +32,6 @@ export default function UserDiary() {
 
   const handlePhotoReplace = (photoId: number) => {
     setPhotoToReplace(photoId);
-    // Trigger file input
-    if (photoInputRef.current) {
-      photoInputRef.current.click();
-    }
   };
 
   return (
@@ -59,7 +54,7 @@ export default function UserDiary() {
         />
 
         <PhotoUpload 
-          username={username} 
+          username={username!} 
           photoToReplace={photoToReplace}
           onPhotoReplaced={() => setPhotoToReplace(null)}
         />

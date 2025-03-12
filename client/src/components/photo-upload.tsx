@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +24,6 @@ async function apiRequest(method: string, url: string, body?: FormData | object)
   return res;
 }
 
-
 export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: PhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -34,12 +33,7 @@ export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: Photo
   const { data: user } = useQuery({
     queryKey: ['/api/users', username],
     queryFn: async () => {
-      const res = await fetch(`/api/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username })
-      });
-      if (!res.ok) throw new Error('Failed to get user');
+      const res = await apiRequest('POST', '/api/users', { username });
       return res.json();
     }
   });
