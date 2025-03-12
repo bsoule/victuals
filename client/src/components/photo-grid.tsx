@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { formatTime } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -11,6 +12,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useState } from 'react';
 
 interface PhotoGridProps {
   photos: Photo[];
@@ -24,6 +26,8 @@ const GRID_SLOTS = 6; // 2x3 grid
 export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery }: PhotoGridProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingPhotoId, setEditingPhotoId] = useState<number | null>(null);
+  const [editingDescription, setEditingDescription] = useState('');
 
   const deleteMutation = useMutation({
     mutationFn: async (photoId: number) => {
@@ -44,6 +48,48 @@ export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery 
       });
     },
   });
+
+  const updateDescriptionMutation = useMutation({
+    mutationFn: async ({ photoId, description }: { photoId: number; description: string }) => {
+      await apiRequest('PATCH', `/api/photos/${photoId}`, { description });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Success",
+        description: "Description updated successfully",
+      });
+      setEditingPhotoId(null);
+      setEditingDescription('');
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update description",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDescriptionClick = (photo: Photo) => {
+    setEditingPhotoId(photo.id);
+    setEditingDescription(photo.description || '');
+  };
+
+  const handleDescriptionSubmit = (photoId: number) => {
+    if (editingDescription !== null) {
+      updateDescriptionMutation.mutate({ photoId, description: editingDescription });
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, photoId: number) => {
+    if (e.key === 'Enter') {
+      handleDescriptionSubmit(photoId);
+    } else if (e.key === 'Escape') {
+      setEditingPhotoId(null);
+      setEditingDescription('');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -84,8 +130,23 @@ export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery 
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm flex flex-col gap-1">
                   <span>{formatTime(new Date(photo.takenAt))}</span>
-                  {photo.description && (
-                    <span className="text-xs opacity-90">{photo.description}</span>
+                  {editingPhotoId === photo.id ? (
+                    <Input
+                      value={editingDescription}
+                      onChange={(e) => setEditingDescription(e.target.value)}
+                      onBlur={() => handleDescriptionSubmit(photo.id)}
+                      onKeyDown={(e) => handleKeyPress(e, photo.id)}
+                      autoFocus
+                      className="text-xs bg-transparent border-none text-white placeholder:text-white/50"
+                      placeholder="Add a description..."
+                    />
+                  ) : (
+                    <span 
+                      className="text-xs opacity-90 cursor-pointer hover:opacity-100"
+                      onClick={() => handleDescriptionClick(photo)}
+                    >
+                      {photo.description || "Tap to add description..."}
+                    </span>
                   )}
                 </div>
               </Card>

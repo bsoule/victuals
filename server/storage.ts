@@ -6,6 +6,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   createPhoto(photo: InsertPhoto): Promise<Photo>;
+  updatePhoto(id: number, updates: { description: string | null }): Promise<Photo>;
   deletePhoto(id: number): Promise<void>;
   getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]>;
 }
@@ -49,6 +50,17 @@ export class MemStorage implements IStorage {
     };
     this.photos.set(id, photo);
     return photo;
+  }
+
+  async updatePhoto(id: number, updates: { description: string | null }): Promise<Photo> {
+    const photo = this.photos.get(id);
+    if (!photo) {
+      throw new Error('Photo not found');
+    }
+
+    const updatedPhoto = { ...photo, ...updates };
+    this.photos.set(id, updatedPhoto);
+    return updatedPhoto;
   }
 
   async deletePhoto(id: number): Promise<void> {

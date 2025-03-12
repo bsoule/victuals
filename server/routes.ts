@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertPhotoSchema } from "@shared/schema";
 import multer from "multer";
-import path from "path";
+import { z } from "zod";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -18,6 +18,11 @@ const upload = multer({
     }
     cb(null, true);
   }
+});
+
+// Schema for photo description updates
+const updatePhotoSchema = z.object({
+  description: z.string().nullable(),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -58,6 +63,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(photo);
     } catch (error) {
       res.status(400).json({ error: 'Invalid photo data' });
+    }
+  });
+
+  app.patch('/api/photos/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = updatePhotoSchema.parse(req.body);
+      const photo = await storage.updatePhoto(parseInt(id), updateData);
+      res.json(photo);
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to update photo' });
     }
   });
 
