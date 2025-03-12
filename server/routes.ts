@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPhotoSchema } from "@shared/schema";
+import { insertUserSchema, insertPhotoSchema, insertCommentSchema } from "@shared/schema";
 import multer from "multer";
 import { z } from "zod";
 
@@ -101,6 +101,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photos = await storage.getPhotosByUserAndDate(user.id, targetDate);
 
       res.json(photos);
+    } catch (error) {
+      res.status(400).json({ error: 'Invalid request' });
+    }
+  });
+
+  // New comment routes
+  app.post('/api/comments', async (req, res) => {
+    try {
+      const commentData = insertCommentSchema.parse(req.body);
+      const comment = await storage.createComment(commentData);
+      res.json(comment);
+    } catch (error) {
+      res.status(400).json({ error: 'Invalid comment data' });
+    }
+  });
+
+  app.get('/api/comments', async (req, res) => {
+    try {
+      const { date } = req.query;
+      if (!date) {
+        return res.status(400).json({ error: 'Date parameter is required' });
+      }
+
+      const targetDate = new Date(date as string);
+      const comments = await storage.getCommentsByDate(targetDate);
+      res.json(comments);
     } catch (error) {
       res.status(400).json({ error: 'Invalid request' });
     }

@@ -5,6 +5,7 @@ import { add, sub } from 'date-fns';
 import { PhotoGrid } from '@/components/photo-grid';
 import { DateNavigation } from '@/components/date-navigation';
 import { PhotoUpload } from '@/components/photo-upload';
+import { Comments } from '@/components/comments';
 import { formatDate } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
 
@@ -72,6 +73,8 @@ export default function UserDiary() {
           replacementMode={replacementMode}
           onPhotoReplaced={handlePhotoReplaced}
         />
+
+        <Comments currentDate={currentDate} />
       </div>
     </div>
   );

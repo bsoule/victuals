@@ -15,6 +15,14 @@ export const photos = pgTable("photos", {
   description: text("description"),
 });
 
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  date: timestamp("date").notNull(), // The day this comment belongs to
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
 });
@@ -25,7 +33,15 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
   description: true,
 });
 
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  userId: true,
+  content: true,
+  date: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
 export type Photo = typeof photos.$inferSelect;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Comment = typeof comments.$inferSelect;

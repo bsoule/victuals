@@ -1,4 +1,4 @@
-import { users, photos, type User, type InsertUser, type Photo, type InsertPhoto } from "@shared/schema";
+import { users, photos, comments, type User, type InsertUser, type Photo, type InsertPhoto, type Comment, type InsertComment } from "@shared/schema";
 import { format } from "date-fns";
 
 export interface IStorage {
@@ -9,19 +9,25 @@ export interface IStorage {
   updatePhoto(id: number, updates: { description: string | null }): Promise<Photo>;
   deletePhoto(id: number): Promise<void>;
   getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]>;
+  createComment(comment: InsertComment): Promise<Comment>;
+  getCommentsByDate(date: Date): Promise<Comment[]>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private photos: Map<number, Photo>;
+  private comments: Map<number, Comment>;
   private currentUserId: number;
   private currentPhotoId: number;
+  private currentCommentId: number;
 
   constructor() {
     this.users = new Map();
     this.photos = new Map();
+    this.comments = new Map();
     this.currentUserId = 1;
     this.currentPhotoId = 1;
+    this.currentCommentId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -72,6 +78,25 @@ export class MemStorage implements IStorage {
     return Array.from(this.photos.values()).filter(photo => {
       const photoDate = format(photo.takenAt, 'yyyy-MM-dd');
       return photo.userId === userId && photoDate === targetDate;
+    });
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    const id = this.currentCommentId++;
+    const comment: Comment = {
+      ...insertComment,
+      id,
+      createdAt: new Date()
+    };
+    this.comments.set(id, comment);
+    return comment;
+  }
+
+  async getCommentsByDate(date: Date): Promise<Comment[]> {
+    const targetDate = format(date, 'yyyy-MM-dd');
+    return Array.from(this.comments.values()).filter(comment => {
+      const commentDate = format(comment.createdAt, 'yyyy-MM-dd'); // Corrected property name
+      return commentDate === targetDate;
     });
   }
 }
