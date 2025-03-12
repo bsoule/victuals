@@ -17,8 +17,8 @@ export const photos = pgTable("photos", {
 
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
-  userId: serial("user_id").references(() => users.id),
-  username: varchar("username", { length: 50 }).notNull(),
+  userId: serial("user_id").references(() => users.id), // The diary owner's ID
+  username: varchar("username", { length: 50 }).notNull(), // The commenter's username
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   date: timestamp("date").notNull(), // The day this comment belongs to

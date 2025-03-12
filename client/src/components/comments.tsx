@@ -10,45 +10,36 @@ import { type Comment } from '@shared/schema';
 
 interface CommentsProps {
   currentDate: Date;
+  diaryOwnerId: number; // The ID of the user whose diary we're viewing
 }
 
-export function Comments({ currentDate }: CommentsProps) {
+export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   const [newComment, setNewComment] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get the stored username from localStorage
+  // Get the stored username from localStorage (the logged-in user)
   const username = localStorage.getItem('food-diary-username');
 
-  // Query to get user ID
-  const { data: user } = useQuery({
-    queryKey: ['/api/users', username],
-    queryFn: async () => {
-      const res = await apiRequest('POST', '/api/users', { username });
-      return res.json();
-    },
-    enabled: !!username
-  });
-
-  // Query to get comments for current date and user
+  // Query to get comments for the diary owner's date
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
-    queryKey: ['/api/comments', formatDate(currentDate), user?.id],
+    queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId],
     queryFn: async () => {
-      const res = await fetch(`/api/comments?date=${formatDate(currentDate)}&userId=${user?.id}`);
+      const res = await fetch(`/api/comments?date=${formatDate(currentDate)}&userId=${diaryOwnerId}`);
       if (!res.ok) throw new Error('Failed to fetch comments');
       return res.json();
     },
-    enabled: !!user?.id
+    enabled: !!diaryOwnerId
   });
 
   // Mutation to add a new comment
   const mutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!user?.id || !username) throw new Error('User not found');
+      if (!username) throw new Error('User not found');
 
       const res = await apiRequest('POST', '/api/comments', {
-        userId: Number(user.id),
-        username: username,
+        userId: diaryOwnerId, // The diary owner's ID
+        username: username, // The logged-in user's username
         content: content.trim(),
         date: currentDate.toISOString()
       });

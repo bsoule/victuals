@@ -15,6 +15,16 @@ export default function UserDiary() {
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
 
+  // Get the diary owner's user ID
+  const { data: user } = useQuery({
+    queryKey: ['/api/users', username],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${username}`);
+      if (!res.ok) throw new Error('Failed to fetch user');
+      return res.json();
+    }
+  });
+
   const { data: photos, isLoading } = useQuery<Photo[]>({
     queryKey: ['/api/users', username, 'photos', formatDate(currentDate)],
     queryFn: async () => {
@@ -68,7 +78,7 @@ export default function UserDiary() {
         />
 
         <div className="pb-32"> {/* Add padding at the bottom to avoid overlap with floating buttons */}
-          <Comments currentDate={currentDate} />
+          {user && <Comments currentDate={currentDate} diaryOwnerId={user.id} />}
         </div>
 
         <PhotoUpload 
