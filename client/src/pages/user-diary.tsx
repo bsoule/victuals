@@ -67,14 +67,16 @@ export default function UserDiary() {
           onChooseFromGallery={handleChooseFromGallery}
         />
 
+        <div className="pb-32"> {/* Add padding at the bottom to avoid overlap with floating buttons */}
+          <Comments currentDate={currentDate} />
+        </div>
+
         <PhotoUpload 
           username={username!} 
           photoToReplace={photoToReplace}
           replacementMode={replacementMode}
           onPhotoReplaced={handlePhotoReplaced}
         />
-
-        <Comments currentDate={currentDate} />
       </div>
     </div>
   );
