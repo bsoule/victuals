@@ -43,10 +43,12 @@ export function Comments({ currentDate }: CommentsProps) {
   // Mutation to add a new comment
   const mutation = useMutation({
     mutationFn: async (content: string) => {
+      if (!user?.id) throw new Error('User not found');
+
       await apiRequest('POST', '/api/comments', {
-        userId: user?.id,
-        content,
-        date: currentDate.toISOString() // Ensure date is properly formatted
+        userId: Number(user.id), // Ensure userId is a number
+        content: content.trim(), // Ensure content is trimmed
+        date: currentDate // Send the full Date object
       });
     },
     onSuccess: () => {
