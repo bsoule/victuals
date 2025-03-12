@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { insertUserSchema } from '@shared/schema';
@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
+const STORAGE_KEY = 'food-diary-username';
+
 export default function Home() {
   const [, setLocation] = useLocation();
   const form = useForm({
@@ -17,12 +19,21 @@ export default function Home() {
     defaultValues: { username: '' }
   });
 
+  // Check for existing username on mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem(STORAGE_KEY);
+    if (savedUsername) {
+      setLocation(`/${savedUsername}`);
+    }
+  }, [setLocation]);
+
   const mutation = useMutation({
     mutationFn: async (username: string) => {
       const res = await apiRequest('POST', '/api/users', { username });
       return res.json();
     },
     onSuccess: (data) => {
+      localStorage.setItem(STORAGE_KEY, data.username);
       setLocation(`/${data.username}`);
     }
   });
