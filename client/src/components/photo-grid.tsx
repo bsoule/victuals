@@ -15,12 +15,13 @@ import { apiRequest } from '@/lib/queryClient';
 interface PhotoGridProps {
   photos: Photo[];
   isLoading: boolean;
-  onPhotoReplace?: (photoId: number) => void;
+  onTakePhoto?: (photoId: number) => void;
+  onChooseFromGallery?: (photoId: number) => void;
 }
 
 const GRID_SLOTS = 6; // 2x3 grid
 
-export function PhotoGrid({ photos, isLoading, onPhotoReplace }: PhotoGridProps) {
+export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery }: PhotoGridProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -88,9 +89,14 @@ export function PhotoGrid({ photos, isLoading, onPhotoReplace }: PhotoGridProps)
             </ContextMenuTrigger>
             <ContextMenuContent>
               <ContextMenuItem 
-                onClick={() => onPhotoReplace?.(photo.id)}
+                onClick={() => onTakePhoto?.(photo.id)}
               >
-                Replace Photo
+                Take New Photo
+              </ContextMenuItem>
+              <ContextMenuItem 
+                onClick={() => onChooseFromGallery?.(photo.id)}
+              >
+                Choose from Gallery
               </ContextMenuItem>
               <ContextMenuItem 
                 className="text-red-600"

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/utils';
 interface PhotoUploadProps {
   username: string;
   photoToReplace?: number | null;
+  replacementMode?: 'camera' | 'gallery' | null;
   onPhotoReplaced?: () => void;
 }
 
@@ -24,7 +25,7 @@ async function apiRequest(method: string, url: string, body?: FormData | object)
   return res;
 }
 
-export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: PhotoUploadProps) {
+export function PhotoUpload({ username, photoToReplace, replacementMode, onPhotoReplaced }: PhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -100,6 +101,15 @@ export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: Photo
     const input = document.getElementById('gallery-input') as HTMLInputElement;
     input?.click();
   };
+
+  // Effect to handle replacement mode changes
+  useEffect(() => {
+    if (replacementMode === 'camera') {
+      triggerCamera();
+    } else if (replacementMode === 'gallery') {
+      triggerGallery();
+    }
+  }, [replacementMode]);
 
   return (
     <div className="fixed bottom-4 right-4 flex gap-2">

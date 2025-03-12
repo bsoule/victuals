@@ -12,6 +12,7 @@ export default function UserDiary() {
   const { username } = useParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
+  const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
 
   const { data: photos, isLoading } = useQuery<Photo[]>({
     queryKey: ['/api/users', username, 'photos', formatDate(currentDate)],
@@ -30,8 +31,19 @@ export default function UserDiary() {
     setCurrentDate(prev => add(prev, { days: 1 }));
   };
 
-  const handlePhotoReplace = (photoId: number) => {
+  const handleTakePhoto = (photoId: number) => {
     setPhotoToReplace(photoId);
+    setReplacementMode('camera');
+  };
+
+  const handleChooseFromGallery = (photoId: number) => {
+    setPhotoToReplace(photoId);
+    setReplacementMode('gallery');
+  };
+
+  const handlePhotoReplaced = () => {
+    setPhotoToReplace(null);
+    setReplacementMode(null);
   };
 
   return (
@@ -50,13 +62,15 @@ export default function UserDiary() {
         <PhotoGrid 
           photos={photos || []} 
           isLoading={isLoading}
-          onPhotoReplace={handlePhotoReplace}
+          onTakePhoto={handleTakePhoto}
+          onChooseFromGallery={handleChooseFromGallery}
         />
 
         <PhotoUpload 
           username={username!} 
           photoToReplace={photoToReplace}
-          onPhotoReplaced={() => setPhotoToReplace(null)}
+          replacementMode={replacementMode}
+          onPhotoReplaced={handlePhotoReplaced}
         />
       </div>
     </div>
