@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { formatTime } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MapPin } from 'lucide-react';
 
 interface PhotoGridProps {
   photos: Photo[];
@@ -25,7 +26,7 @@ export function PhotoGrid({ photos, isLoading }: PhotoGridProps) {
     <div className="grid grid-cols-2 gap-4 my-4">
       {Array.from({ length: GRID_SLOTS }).map((_, index) => {
         const photo = photos[index];
-        
+
         if (!photo) {
           return (
             <Card 
@@ -47,7 +48,12 @@ export function PhotoGrid({ photos, isLoading }: PhotoGridProps) {
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
-              {formatTime(new Date(photo.takenAt))}
+              <div className="flex items-center justify-between">
+                <span>{formatTime(new Date(photo.takenAt))}</span>
+                {photo.latitude && photo.longitude && (
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
             </div>
           </Card>
         );

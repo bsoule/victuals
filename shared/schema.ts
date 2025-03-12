@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, varchar, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -13,6 +13,9 @@ export const photos = pgTable("photos", {
   imageUrl: text("image_url").notNull(),
   takenAt: timestamp("taken_at").notNull().defaultNow(),
   comment: text("comment"),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }),
+  locationName: text("location_name"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -23,6 +26,9 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
   userId: true,
   imageUrl: true,
   comment: true,
+  latitude: true,
+  longitude: true,
+  locationName: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

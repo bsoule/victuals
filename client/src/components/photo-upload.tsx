@@ -28,12 +28,41 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
     }
   });
 
+  const captureLocation = async () => {
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        });
+      });
+
+      return {
+        latitude: position.coords.latitude.toFixed(7),
+        longitude: position.coords.longitude.toFixed(7)
+      };
+    } catch (error) {
+      console.log('Location access denied or error:', error);
+      return null;
+    }
+  };
+
   const mutation = useMutation({
     mutationFn: async (file: File) => {
       setIsUploading(true);
+
+      // Try to get location
+      const location = await captureLocation();
+
       const formData = new FormData();
       formData.append('photo', file);
       formData.append('userId', user?.id.toString() || '');
+
+      if (location) {
+        formData.append('latitude', location.latitude);
+        formData.append('longitude', location.longitude);
+      }
 
       const res = await fetch('/api/photos', {
         method: 'POST',
