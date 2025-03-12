@@ -125,13 +125,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/comments', async (req, res) => {
     try {
-      const { date } = req.query;
-      if (!date) {
-        return res.status(400).json({ error: 'Date parameter is required' });
+      const { date, userId } = req.query;
+      if (!date || !userId) {
+        return res.status(400).json({ error: 'Date and userId parameters are required' });
       }
 
       const targetDate = new Date(date as string);
-      const comments = await storage.getCommentsByDate(targetDate);
+      const comments = await storage.getCommentsByUserAndDate(Number(userId), targetDate);
       res.json(comments);
     } catch (error) {
       res.status(400).json({ error: 'Invalid request' });

@@ -30,14 +30,15 @@ export function Comments({ currentDate }: CommentsProps) {
     enabled: !!username
   });
 
-  // Query to get comments for current date
+  // Query to get comments for current date and user
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
-    queryKey: ['/api/comments', formatDate(currentDate)],
+    queryKey: ['/api/comments', formatDate(currentDate), user?.id],
     queryFn: async () => {
-      const res = await fetch(`/api/comments?date=${formatDate(currentDate)}`);
+      const res = await fetch(`/api/comments?date=${formatDate(currentDate)}&userId=${user?.id}`);
       if (!res.ok) throw new Error('Failed to fetch comments');
       return res.json();
-    }
+    },
+    enabled: !!user?.id
   });
 
   // Mutation to add a new comment
@@ -47,7 +48,7 @@ export function Comments({ currentDate }: CommentsProps) {
 
       const res = await apiRequest('POST', '/api/comments', {
         userId: Number(user.id),
-        username: username, // Include username in the comment
+        username: username,
         content: content.trim(),
         date: currentDate.toISOString()
       });

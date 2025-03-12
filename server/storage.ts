@@ -10,7 +10,7 @@ export interface IStorage {
   deletePhoto(id: number): Promise<void>;
   getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]>;
   createComment(comment: InsertComment): Promise<Comment>;
-  getCommentsByDate(date: Date): Promise<Comment[]>;
+  getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -94,6 +94,13 @@ export class MemStorage implements IStorage {
     return comment;
   }
 
+  async getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]> {
+    const targetDate = format(date, 'yyyy-MM-dd');
+    return Array.from(this.comments.values()).filter(comment => {
+      const commentDate = format(comment.date, 'yyyy-MM-dd');
+      return comment.userId === userId && commentDate === targetDate;
+    });
+  }
   async getCommentsByDate(date: Date): Promise<Comment[]> {
     const targetDate = format(date, 'yyyy-MM-dd');
     return Array.from(this.comments.values()).filter(comment => {
