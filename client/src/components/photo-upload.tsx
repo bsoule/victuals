@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/lib/utils';
 
 interface PhotoUploadProps {
@@ -14,12 +14,26 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get the user ID for this username
+  const { data: user } = useQuery({
+    queryKey: ['/api/users', username],
+    queryFn: async () => {
+      const res = await fetch(`/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      if (!res.ok) throw new Error('Failed to get user');
+      return res.json();
+    }
+  });
+
   const mutation = useMutation({
     mutationFn: async (file: File) => {
       setIsUploading(true);
       const formData = new FormData();
       formData.append('photo', file);
-      formData.append('userId', '1'); // In real app, get from context
+      formData.append('userId', user?.id.toString() || '');
 
       const res = await fetch('/api/photos', {
         method: 'POST',
@@ -33,12 +47,13 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
       return res.json();
     },
     onSuccess: () => {
+      // Invalidate today's photos query
       queryClient.invalidateQueries({
         queryKey: ['/api/users', username, 'photos', formatDate(new Date())]
       });
       toast({
         title: "Success",
-        description: "Photo uploaded successfully",
+        description: "Photo captured and uploaded successfully",
       });
     },
     onError: (error) => {
@@ -56,7 +71,7 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
   const handleFileInput = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
+
     mutation.mutate(file);
   };
 
@@ -69,14 +84,19 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
         onChange={handleFileInput}
         className="hidden"
         id="camera-input"
+        disabled={isUploading || !user}
       />
       <label htmlFor="camera-input">
         <Button 
           size="icon" 
-          className="h-14 w-14 rounded-full"
-          disabled={isUploading}
+          className="h-14 w-14 rounded-full shadow-lg"
+          disabled={isUploading || !user}
         >
-          <Camera className="h-6 w-6" />
+          {isUploading ? (
+            <span className="animate-pulse">...</span>
+          ) : (
+            <Camera className="h-6 w-6" />
+          )}
         </Button>
       </label>
     </div>
