@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera } from 'lucide-react';
+import { Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/lib/utils';
@@ -85,8 +85,15 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
     input?.click();
   };
 
+  const triggerGallery = () => {
+    console.log('Gallery button clicked');
+    const input = document.getElementById('gallery-input') as HTMLInputElement;
+    input?.click();
+  };
+
   return (
-    <div className="fixed bottom-4 right-4">
+    <div className="fixed bottom-4 right-4 flex gap-2">
+      {/* Camera input */}
       <input
         type="file"
         accept="image/*"
@@ -96,6 +103,31 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
         id="camera-input"
         disabled={isUploading || !user}
       />
+
+      {/* Gallery input */}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileInput}
+        className="hidden"
+        id="gallery-input"
+        disabled={isUploading || !user}
+      />
+
+      <Button 
+        size="icon" 
+        className="h-14 w-14 rounded-full shadow-lg"
+        disabled={isUploading || !user}
+        onClick={triggerGallery}
+        variant="outline"
+      >
+        {isUploading ? (
+          <span className="animate-pulse">...</span>
+        ) : (
+          <Image className="h-6 w-6" />
+        )}
+      </Button>
+
       <Button 
         size="icon" 
         className="h-14 w-14 rounded-full shadow-lg"
