@@ -6,6 +6,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   createPhoto(photo: InsertPhoto): Promise<Photo>;
+  deletePhoto(id: number): Promise<void>;
   getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]>;
 }
 
@@ -48,6 +49,10 @@ export class MemStorage implements IStorage {
     };
     this.photos.set(id, photo);
     return photo;
+  }
+
+  async deletePhoto(id: number): Promise<void> {
+    this.photos.delete(id);
   }
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {

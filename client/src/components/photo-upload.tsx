@@ -7,9 +7,11 @@ import { formatDate } from '@/lib/utils';
 
 interface PhotoUploadProps {
   username: string;
+  photoToReplace?: number | null;
+  onPhotoReplaced?: () => void;
 }
 
-export function PhotoUpload({ username }: PhotoUploadProps) {
+export function PhotoUpload({ username, photoToReplace, onPhotoReplaced }: PhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -35,6 +37,11 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
       formData.append('photo', file);
       formData.append('userId', user?.id.toString() || '');
 
+      // If we're replacing a photo, delete the old one first
+      if (photoToReplace) {
+        await fetch(`/api/photos/${photoToReplace}`, { method: 'DELETE' });
+      }
+
       const res = await fetch('/api/photos', {
         method: 'POST',
         body: formData,
@@ -53,8 +60,11 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
       });
       toast({
         title: "Success",
-        description: "Photo captured and uploaded successfully",
+        description: photoToReplace ? "Photo replaced successfully" : "Photo captured and uploaded successfully",
       });
+      if (photoToReplace && onPhotoReplaced) {
+        onPhotoReplaced();
+      }
     },
     onError: (error) => {
       toast({

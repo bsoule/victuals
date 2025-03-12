@@ -2,15 +2,48 @@ import { Card } from '@/components/ui/card';
 import { formatTime } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface PhotoGridProps {
   photos: Photo[];
   isLoading: boolean;
+  onPhotoReplace?: (photoId: number) => void;
 }
 
 const GRID_SLOTS = 6; // 2x3 grid
 
-export function PhotoGrid({ photos, isLoading }: PhotoGridProps) {
+export function PhotoGrid({ photos, isLoading, onPhotoReplace }: PhotoGridProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (photoId: number) => {
+      await apiRequest('DELETE', `/api/photos/${photoId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Success",
+        description: "Photo deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete photo",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 my-4">
@@ -40,16 +73,33 @@ export function PhotoGrid({ photos, isLoading }: PhotoGridProps) {
         }
 
         return (
-          <Card key={photo.id} className="aspect-square overflow-hidden relative">
-            <img 
-              src={photo.imageUrl} 
-              alt="Food" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
-              <span>{formatTime(new Date(photo.takenAt))}</span>
-            </div>
-          </Card>
+          <ContextMenu key={photo.id}>
+            <ContextMenuTrigger>
+              <Card className="aspect-square overflow-hidden relative">
+                <img 
+                  src={photo.imageUrl} 
+                  alt="Food" 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                  <span>{formatTime(new Date(photo.takenAt))}</span>
+                </div>
+              </Card>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuItem 
+                onClick={() => onPhotoReplace?.(photo.id)}
+              >
+                Replace Photo
+              </ContextMenuItem>
+              <ContextMenuItem 
+                className="text-red-600"
+                onClick={() => deleteMutation.mutate(photo.id)}
+              >
+                Delete Photo
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
         );
       })}
     </div>

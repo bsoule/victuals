@@ -25,11 +25,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userData = insertUserSchema.parse(req.body);
       const existingUser = await storage.getUserByUsername(userData.username);
-      
+
       if (existingUser) {
         return res.json(existingUser);
       }
-      
+
       const user = await storage.createUser(userData);
       res.json(user);
     } catch (error) {
@@ -61,11 +61,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/photos/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePhoto(parseInt(id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to delete photo' });
+    }
+  });
+
   app.get('/api/users/:username/photos', async (req, res) => {
     try {
       const { username } = req.params;
       const { date } = req.query;
-      
+
       const user = await storage.getUserByUsername(username);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
@@ -73,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const targetDate = date ? new Date(date as string) : new Date();
       const photos = await storage.getPhotosByUserAndDate(user.id, targetDate);
-      
+
       res.json(photos);
     } catch (error) {
       res.status(400).json({ error: 'Invalid request' });
