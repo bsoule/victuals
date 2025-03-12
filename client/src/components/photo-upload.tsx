@@ -69,10 +69,20 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
   });
 
   const handleFileInput = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input change event triggered');
     const file = event.target.files?.[0];
-    if (!file) return;
-
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+    console.log('File selected:', file.name, file.type);
     mutation.mutate(file);
+  };
+
+  const triggerCamera = () => {
+    console.log('Camera button clicked');
+    const input = document.getElementById('camera-input') as HTMLInputElement;
+    input?.click();
   };
 
   return (
@@ -86,19 +96,18 @@ export function PhotoUpload({ username }: PhotoUploadProps) {
         id="camera-input"
         disabled={isUploading || !user}
       />
-      <label htmlFor="camera-input">
-        <Button 
-          size="icon" 
-          className="h-14 w-14 rounded-full shadow-lg"
-          disabled={isUploading || !user}
-        >
-          {isUploading ? (
-            <span className="animate-pulse">...</span>
-          ) : (
-            <Camera className="h-6 w-6" />
-          )}
-        </Button>
-      </label>
+      <Button 
+        size="icon" 
+        className="h-14 w-14 rounded-full shadow-lg"
+        disabled={isUploading || !user}
+        onClick={triggerCamera}
+      >
+        {isUploading ? (
+          <span className="animate-pulse">...</span>
+        ) : (
+          <Camera className="h-6 w-6" />
+        )}
+      </Button>
     </div>
   );
 }
