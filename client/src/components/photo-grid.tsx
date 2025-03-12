@@ -128,7 +128,7 @@ export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery 
                   alt={photo.description || "Food"} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm flex flex-col gap-1">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm flex flex-col gap-1 max-h-[50%]">
                   <span>{formatTime(new Date(photo.takenAt))}</span>
                   {editingPhotoId === photo.id ? (
                     <Input
@@ -142,7 +142,7 @@ export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery 
                     />
                   ) : (
                     <span 
-                      className="text-xs opacity-90 cursor-pointer hover:opacity-100"
+                      className="text-xs opacity-90 cursor-pointer hover:opacity-100 line-clamp-3 overflow-y-auto"
                       onClick={() => handleDescriptionClick(photo)}
                     >
                       {photo.description || "Tap to add description..."}
