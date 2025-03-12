@@ -45,11 +45,12 @@ export function Comments({ currentDate }: CommentsProps) {
     mutationFn: async (content: string) => {
       if (!user?.id) throw new Error('User not found');
 
-      await apiRequest('POST', '/api/comments', {
+      const res = await apiRequest('POST', '/api/comments', {
         userId: Number(user.id), // Ensure userId is a number
         content: content.trim(), // Ensure content is trimmed
-        date: currentDate // Send the full Date object
+        date: currentDate.toISOString() // Send date as ISO string
       });
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/comments'] });
@@ -60,6 +61,7 @@ export function Comments({ currentDate }: CommentsProps) {
       });
     },
     onError: (error) => {
+      console.error('Comment error:', error); // Debug log
       toast({
         title: "Error",
         description: "Failed to add comment",

@@ -109,11 +109,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // New comment routes
   app.post('/api/comments', async (req, res) => {
     try {
-      const commentData = insertCommentSchema.parse(req.body);
+      console.log('Received comment data:', req.body); // Debug log
+      const commentData = insertCommentSchema.parse({
+        ...req.body,
+        userId: Number(req.body.userId),
+        date: new Date(req.body.date)
+      });
       const comment = await storage.createComment(commentData);
       res.json(comment);
     } catch (error) {
-      res.status(400).json({ error: 'Invalid comment data' });
+      console.error('Comment validation error:', error); // Debug log
+      res.status(400).json({ error: 'Invalid comment data', details: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
