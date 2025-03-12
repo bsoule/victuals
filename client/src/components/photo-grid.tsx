@@ -79,11 +79,14 @@ export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery 
               <Card className="aspect-square overflow-hidden relative">
                 <img 
                   src={photo.imageUrl} 
-                  alt="Food" 
+                  alt={photo.description || "Food"} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm flex flex-col gap-1">
                   <span>{formatTime(new Date(photo.takenAt))}</span>
+                  {photo.description && (
+                    <span className="text-xs opacity-90">{photo.description}</span>
+                  )}
                 </div>
               </Card>
             </ContextMenuTrigger>

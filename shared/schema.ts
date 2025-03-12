@@ -12,7 +12,7 @@ export const photos = pgTable("photos", {
   userId: serial("user_id").references(() => users.id),
   imageUrl: text("image_url").notNull(),
   takenAt: timestamp("taken_at").notNull().defaultNow(),
-  comment: text("comment"),
+  description: text("description"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -22,7 +22,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertPhotoSchema = createInsertSchema(photos).pick({
   userId: true,
   imageUrl: true,
-  comment: true,
+  description: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

@@ -4,6 +4,14 @@ import { Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface PhotoUploadProps {
   username: string;
@@ -27,6 +35,9 @@ async function apiRequest(method: string, url: string, body?: FormData | object)
 
 export function PhotoUpload({ username, photoToReplace, replacementMode, onPhotoReplaced }: PhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [showDescriptionDialog, setShowDescriptionDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [description, setDescription] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -45,6 +56,7 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
       const formData = new FormData();
       formData.append('photo', file);
       formData.append('userId', user?.id.toString() || '');
+      formData.append('description', description);
 
       // If we're replacing a photo, delete the old one first
       if (photoToReplace) {
@@ -66,6 +78,10 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
       if (photoToReplace && onPhotoReplaced) {
         onPhotoReplaced();
       }
+      // Reset state
+      setDescription('');
+      setSelectedFile(null);
+      setShowDescriptionDialog(false);
     },
     onError: (error) => {
       toast({
@@ -87,7 +103,14 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
       return;
     }
     console.log('File selected:', file.name, file.type);
-    mutation.mutate(file);
+    setSelectedFile(file);
+    setShowDescriptionDialog(true);
+  };
+
+  const handleSubmit = () => {
+    if (selectedFile) {
+      mutation.mutate(selectedFile);
+    }
   };
 
   const triggerCamera = () => {
@@ -112,54 +135,78 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
   }, [replacementMode]);
 
   return (
-    <div className="fixed bottom-4 right-4 flex gap-2">
-      {/* Camera input */}
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileInput}
-        className="hidden"
-        id="camera-input"
-        disabled={isUploading || !user}
-      />
+    <>
+      <Dialog open={showDescriptionDialog} onOpenChange={setShowDescriptionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a description</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                placeholder="What's in this photo?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleSubmit} disabled={isUploading}>
+              {isUploading ? "Uploading..." : "Upload Photo"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      {/* Gallery input */}
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileInput}
-        className="hidden"
-        id="gallery-input"
-        disabled={isUploading || !user}
-      />
+      <div className="fixed bottom-4 right-4 flex gap-2">
+        {/* Camera input */}
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileInput}
+          className="hidden"
+          id="camera-input"
+          disabled={isUploading || !user}
+        />
 
-      <Button 
-        size="icon" 
-        className="h-14 w-14 rounded-full shadow-lg"
-        disabled={isUploading || !user}
-        onClick={triggerGallery}
-        variant="outline"
-      >
-        {isUploading ? (
-          <span className="animate-pulse">...</span>
-        ) : (
-          <Image className="h-6 w-6" />
-        )}
-      </Button>
+        {/* Gallery input */}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileInput}
+          className="hidden"
+          id="gallery-input"
+          disabled={isUploading || !user}
+        />
 
-      <Button 
-        size="icon" 
-        className="h-14 w-14 rounded-full shadow-lg"
-        disabled={isUploading || !user}
-        onClick={triggerCamera}
-      >
-        {isUploading ? (
-          <span className="animate-pulse">...</span>
-        ) : (
-          <Camera className="h-6 w-6" />
-        )}
-      </Button>
-    </div>
+        <Button 
+          size="icon" 
+          className="h-14 w-14 rounded-full shadow-lg"
+          disabled={isUploading || !user}
+          onClick={triggerGallery}
+          variant="outline"
+        >
+          {isUploading ? (
+            <span className="animate-pulse">...</span>
+          ) : (
+            <Image className="h-6 w-6" />
+          )}
+        </Button>
+
+        <Button 
+          size="icon" 
+          className="h-14 w-14 rounded-full shadow-lg"
+          disabled={isUploading || !user}
+          onClick={triggerCamera}
+        >
+          {isUploading ? (
+            <span className="animate-pulse">...</span>
+          ) : (
+            <Camera className="h-6 w-6" />
+          )}
+        </Button>
+      </div>
+    </>
   );
 }
