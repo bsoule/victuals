@@ -14,6 +14,7 @@ export default function UserDiary() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
+  const [activeTimeSlot, setActiveTimeSlot] = useState<number | null>(null);
 
   // Get the diary owner's user ID
   const { data: user } = useQuery({
@@ -42,23 +43,28 @@ export default function UserDiary() {
     setCurrentDate(prev => add(prev, { days: 1 }));
   };
 
-  const handleTakePhoto = (photoId: number) => {
-    setPhotoToReplace(photoId);
+  const handleTakePhoto = (timeSlot: number) => {
+    const existingPhoto = photos?.find(p => p.timeSlot === timeSlot);
+    setPhotoToReplace(existingPhoto?.id || null);
+    setActiveTimeSlot(timeSlot);
     setReplacementMode('camera');
   };
 
-  const handleChooseFromGallery = (photoId: number) => {
-    setPhotoToReplace(photoId);
+  const handleChooseFromGallery = (timeSlot: number) => {
+    const existingPhoto = photos?.find(p => p.timeSlot === timeSlot);
+    setPhotoToReplace(existingPhoto?.id || null);
+    setActiveTimeSlot(timeSlot);
     setReplacementMode('gallery');
   };
 
   const handlePhotoReplaced = () => {
     setPhotoToReplace(null);
     setReplacementMode(null);
+    setActiveTimeSlot(null);
   };
 
   return (
-    <div className="min-h-screen bg-background pt-16 pb-4"> {/* Added top padding */}
+    <div className="min-h-screen bg-background pt-16 pb-4">
       <div className="max-w-lg mx-auto px-4">
         <h1 className="text-2xl font-bold mb-4 text-center">
           {username}'s Food Diary
@@ -77,16 +83,19 @@ export default function UserDiary() {
           onChooseFromGallery={handleChooseFromGallery}
         />
 
-        <div className="pb-32"> {/* Add padding at the bottom to avoid overlap with floating buttons */}
+        <div className="pb-32">
           {user && <Comments currentDate={currentDate} diaryOwnerId={user.id} />}
         </div>
 
-        <PhotoUpload 
-          username={username!} 
-          photoToReplace={photoToReplace}
-          replacementMode={replacementMode}
-          onPhotoReplaced={handlePhotoReplaced}
-        />
+        {activeTimeSlot !== null && (
+          <PhotoUpload 
+            username={username!} 
+            photoToReplace={photoToReplace}
+            replacementMode={replacementMode}
+            onPhotoReplaced={handlePhotoReplaced}
+            timeSlot={activeTimeSlot}
+          />
+        )}
       </div>
     </div>
   );

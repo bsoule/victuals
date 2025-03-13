@@ -18,6 +18,7 @@ interface PhotoUploadProps {
   photoToReplace?: number | null;
   replacementMode?: 'camera' | 'gallery' | null;
   onPhotoReplaced?: () => void;
+  timeSlot: number;
 }
 
 async function apiRequest(method: string, url: string, body?: FormData | object) {
@@ -33,7 +34,7 @@ async function apiRequest(method: string, url: string, body?: FormData | object)
   return res;
 }
 
-export function PhotoUpload({ username, photoToReplace, replacementMode, onPhotoReplaced }: PhotoUploadProps) {
+export function PhotoUpload({ username, photoToReplace, replacementMode, onPhotoReplaced, timeSlot }: PhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [showDescriptionDialog, setShowDescriptionDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -57,6 +58,7 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
       formData.append('photo', file);
       formData.append('userId', user?.id.toString() || '');
       formData.append('description', description);
+      formData.append('timeSlot', timeSlot.toString());
 
       // If we're replacing a photo, delete the old one first
       if (photoToReplace) {

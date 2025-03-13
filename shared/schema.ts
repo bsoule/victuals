@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, varchar, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -13,15 +13,16 @@ export const photos = pgTable("photos", {
   imageUrl: text("image_url").notNull(),
   takenAt: timestamp("taken_at").notNull().defaultNow(),
   description: text("description"),
+  timeSlot: integer("time_slot").notNull(), // 0-5 representing the square position
 });
 
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
-  userId: serial("user_id").references(() => users.id), // The diary owner's ID
-  username: varchar("username", { length: 50 }).notNull(), // The commenter's username
+  userId: serial("user_id").references(() => users.id),
+  username: varchar("username", { length: 50 }).notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  date: timestamp("date").notNull(), // The day this comment belongs to
+  date: timestamp("date").notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -32,6 +33,7 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
   userId: true,
   imageUrl: true,
   description: true,
+  timeSlot: true,
 });
 
 export const insertCommentSchema = createInsertSchema(comments).pick({

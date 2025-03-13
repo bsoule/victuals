@@ -17,8 +17,8 @@ import { useState } from 'react';
 interface PhotoGridProps {
   photos: Photo[];
   isLoading: boolean;
-  onTakePhoto?: (photoId: number) => void;
-  onChooseFromGallery?: (photoId: number) => void;
+  onTakePhoto?: (timeSlot: number) => void;
+  onChooseFromGallery?: (timeSlot: number) => void;
 }
 
 const GRID_SLOTS = 6; // 2x3 grid
@@ -101,73 +101,73 @@ export function PhotoGrid({ photos, isLoading, onTakePhoto, onChooseFromGallery 
     );
   }
 
+  const getTimeForSlot = (index: number) => {
+    return new Date(new Date().setHours(9 + Math.floor(index * 2.5)));
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 my-4">
       {Array.from({ length: GRID_SLOTS }).map((_, index) => {
-        const photo = photos[index];
-
-        if (!photo) {
-          return (
-            <Card 
-              key={`empty-${index}`} 
-              className="aspect-square flex items-center justify-center bg-pink-100"
-            >
-              <span className="text-pink-300">
-                {formatTime(new Date(new Date().setHours(9 + Math.floor(index * 2.5))))}
-              </span>
-            </Card>
-          );
-        }
+        const photo = photos.find(p => p.timeSlot === index);
+        const timeSlotTime = getTimeForSlot(index);
 
         return (
-          <ContextMenu key={photo.id}>
+          <ContextMenu key={index}>
             <ContextMenuTrigger>
               <Card className="aspect-square overflow-hidden relative">
-                <img 
-                  src={photo.imageUrl} 
-                  alt={photo.description || "Food"} 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm flex flex-col gap-1 max-h-[50%]">
-                  <span>{formatTime(new Date(photo.takenAt))}</span>
-                  {editingPhotoId === photo.id ? (
-                    <Input
-                      value={editingDescription}
-                      onChange={(e) => setEditingDescription(e.target.value)}
-                      onBlur={() => handleDescriptionSubmit(photo.id)}
-                      onKeyDown={(e) => handleKeyPress(e, photo.id)}
-                      autoFocus
-                      className="text-xs bg-transparent border-none text-white placeholder:text-white/50"
-                      placeholder="Add a description..."
+                {photo ? (
+                  <>
+                    <img 
+                      src={photo.imageUrl} 
+                      alt={photo.description || "Food"} 
+                      className="w-full h-full object-cover"
                     />
-                  ) : (
-                    <span 
-                      className="text-xs opacity-90 cursor-pointer hover:opacity-100 line-clamp-3 overflow-y-auto"
-                      onClick={() => handleDescriptionClick(photo)}
-                    >
-                      {photo.description || "Tap to add description..."}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm flex flex-col gap-1">
+                      <span>{formatTime(timeSlotTime)}</span>
+                      {editingPhotoId === photo.id ? (
+                        <Input
+                          value={editingDescription}
+                          onChange={(e) => setEditingDescription(e.target.value)}
+                          onBlur={() => handleDescriptionSubmit(photo.id)}
+                          onKeyDown={(e) => handleKeyPress(e, photo.id)}
+                          autoFocus
+                          className="text-xs bg-transparent border-none text-white placeholder:text-white/50"
+                          placeholder="Add a description..."
+                        />
+                      ) : (
+                        <span 
+                          className="text-xs opacity-90 cursor-pointer hover:opacity-100"
+                          onClick={() => handleDescriptionClick(photo)}
+                        >
+                          {photo.description || "Tap to add description..."}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-pink-100">
+                    <span className="text-pink-300">
+                      {formatTime(timeSlotTime)}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </Card>
             </ContextMenuTrigger>
             <ContextMenuContent>
-              <ContextMenuItem 
-                onClick={() => onTakePhoto?.(photo.id)}
-              >
-                Take New Photo
+              <ContextMenuItem onClick={() => onTakePhoto?.(index)}>
+                {photo ? 'Take New Photo' : 'Take Photo'}
               </ContextMenuItem>
-              <ContextMenuItem 
-                onClick={() => onChooseFromGallery?.(photo.id)}
-              >
-                Choose from Gallery
+              <ContextMenuItem onClick={() => onChooseFromGallery?.(index)}>
+                {photo ? 'Choose New from Gallery' : 'Choose from Gallery'}
               </ContextMenuItem>
-              <ContextMenuItem 
-                className="text-red-600"
-                onClick={() => deleteMutation.mutate(photo.id)}
-              >
-                Delete Photo
-              </ContextMenuItem>
+              {photo && (
+                <ContextMenuItem 
+                  className="text-red-600"
+                  onClick={() => deleteMutation.mutate(photo.id)}
+                >
+                  Delete Photo
+                </ContextMenuItem>
+              )}
             </ContextMenuContent>
           </ContextMenu>
         );
