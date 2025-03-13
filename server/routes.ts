@@ -53,6 +53,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const base64Image = req.file.buffer.toString('base64');
       const imageUrl = `data:${req.file.mimetype};base64,${base64Image}`;
 
+      console.log('Creating photo with data:', { 
+        userId: req.body.userId,
+        description: req.body.description
+      }); // Debug log
+
       const photoData = insertPhotoSchema.parse({
         ...req.body,
         imageUrl,
@@ -62,6 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photo = await storage.createPhoto(photoData);
       res.json(photo);
     } catch (error) {
+      console.error('Photo upload error:', error); // Debug log
       res.status(400).json({ error: 'Invalid photo data' });
     }
   });
@@ -92,6 +98,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username } = req.params;
       const { date } = req.query;
 
+      console.log('Fetching photos for:', { username, date }); // Debug log
+
       const user = await storage.getUserByUsername(username);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
@@ -100,8 +108,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const targetDate = date ? new Date(date as string) : new Date();
       const photos = await storage.getPhotosByUserAndDate(user.id, targetDate);
 
+      console.log('Found photos:', photos.length); // Debug log
       res.json(photos);
     } catch (error) {
+      console.error('Photo fetch error:', error); // Debug log
       res.status(400).json({ error: 'Invalid request' });
     }
   });

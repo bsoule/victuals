@@ -63,7 +63,16 @@ export class MemStorage implements IStorage {
       takenAt: new Date(),
       description: insertPhoto.description || null
     };
+    console.log('Creating photo:', { ...photo, imageUrl: '[truncated]' }); // Debug log
     this.photos.set(id, photo);
+
+    // Debug: Print all photos after creation
+    console.log('All photos in storage:', Array.from(this.photos.values()).map(p => ({ 
+      ...p, 
+      imageUrl: '[truncated]',
+      userId: p.userId
+    })));
+
     return photo;
   }
 
@@ -83,11 +92,24 @@ export class MemStorage implements IStorage {
   }
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
+    console.log('Fetching photos for user:', userId, 'date:', date); // Debug log
     const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
-    return Array.from(this.photos.values()).filter(photo => {
+    const allPhotos = Array.from(this.photos.values());
+    console.log('All photos before filtering:', allPhotos.map(p => ({ 
+      id: p.id, 
+      userId: p.userId,
+      takenAt: p.takenAt
+    }))); // Debug log
+
+    const photos = allPhotos.filter(photo => {
       const photoDate = format(startOfDay(photo.takenAt), 'yyyy-MM-dd');
-      return photo.userId === userId && photoDate === targetDate;
+      const matches = photo.userId === userId && photoDate === targetDate;
+      console.log('Photo', photo.id, 'userId:', photo.userId, 'date:', photoDate, 'matches:', matches);
+      return matches;
     });
+
+    console.log('Filtered photos:', photos.length); // Debug log
+    return photos;
   }
 
   async createComment(insertComment: InsertComment): Promise<Comment> {
