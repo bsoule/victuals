@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPhotoSchema, insertCommentSchema } from "@shared/schema";
 import multer from "multer";
 import { z } from "zod";
+import { format, startOfDay } from 'date-fns';
+
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -55,7 +57,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Creating photo with data:', { 
         userId: req.body.userId,
-        description: req.body.description
+        description: req.body.description,
+        date: new Date().toISOString()
       }); // Debug log
 
       const photoData = insertPhotoSchema.parse({
@@ -64,7 +67,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: parseInt(req.body.userId)
       });
 
+      console.log('Parsed photo data:', {
+        ...photoData,
+        imageUrl: '[truncated]'
+      });
+
       const photo = await storage.createPhoto(photoData);
+      console.log('Created photo:', {
+        ...photo,
+        imageUrl: '[truncated]'
+      });
       res.json(photo);
     } catch (error) {
       console.error('Photo upload error:', error); // Debug log
@@ -106,6 +118,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const targetDate = date ? new Date(date as string) : new Date();
+      console.log('Target date for photo fetch:', {
+        raw: targetDate,
+        formatted: format(startOfDay(targetDate), 'yyyy-MM-dd')
+      });
+
       const photos = await storage.getPhotosByUserAndDate(user.id, targetDate);
 
       console.log('Found photos:', photos.length); // Debug log

@@ -98,17 +98,24 @@ export class MemStorage implements IStorage {
     console.log('All photos before filtering:', allPhotos.map(p => ({ 
       id: p.id, 
       userId: p.userId,
-      takenAt: p.takenAt
-    }))); // Debug log
+      takenAt: p.takenAt,
+      date: format(startOfDay(p.takenAt), 'yyyy-MM-dd')
+    }))); // Debug log showing formatted dates
 
     const photos = allPhotos.filter(photo => {
       const photoDate = format(startOfDay(photo.takenAt), 'yyyy-MM-dd');
       const matches = photo.userId === userId && photoDate === targetDate;
-      console.log('Photo', photo.id, 'userId:', photo.userId, 'date:', photoDate, 'matches:', matches);
+      console.log('Photo', photo.id, {
+        photoUserId: photo.userId,
+        requestedUserId: userId,
+        photoDate,
+        targetDate,
+        matches
+      });
       return matches;
     });
 
-    console.log('Filtered photos:', photos.length); // Debug log
+    console.log('Filtered photos:', photos.length, 'for date:', targetDate); // Debug log
     return photos;
   }
 
