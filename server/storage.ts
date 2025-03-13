@@ -1,5 +1,5 @@
 import { users, photos, comments, type User, type InsertUser, type Photo, type InsertPhoto, type Comment, type InsertComment } from "@shared/schema";
-import { format, startOfDay } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 import { toZonedTime } from 'date-fns-tz';
 
 // Helper function to normalize dates to user's timezone
@@ -97,36 +97,45 @@ export class MemStorage implements IStorage {
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
     console.log('Fetching photos for user:', userId, 'date:', date);
 
-    // Convert input date to UTC midnight of that day
-    const localMidnight = startOfDay(toZonedTime(date, Intl.DateTimeFormat().resolvedOptions().timeZone));
-    const targetDate = format(localMidnight, 'yyyy-MM-dd');
+    // Get the local timezone
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Convert the input date to the local timezone
+    const localDate = toZonedTime(date, timeZone);
+
+    // Get the start and end of the local day
+    const localDayStart = startOfDay(localDate);
+    const localDayEnd = endOfDay(localDate);
 
     const allPhotos = Array.from(this.photos.values());
     console.log('All photos before filtering:', allPhotos.map(p => ({ 
       id: p.id, 
       userId: p.userId,
       takenAt: p.takenAt,
-      localDate: format(toZonedTime(p.takenAt, Intl.DateTimeFormat().resolvedOptions().timeZone), 'yyyy-MM-dd')
+      localDate: format(toZonedTime(p.takenAt, timeZone), 'yyyy-MM-dd')
     })));
 
     const photos = allPhotos.filter(photo => {
-      // Convert photo's UTC timestamp to local date for comparison
-      const photoLocalDate = format(
-        toZonedTime(photo.takenAt, Intl.DateTimeFormat().resolvedOptions().timeZone),
-        'yyyy-MM-dd'
-      );
-      const matches = photo.userId === userId && photoLocalDate === targetDate;
+      // Convert the photo's UTC timestamp to local time
+      const photoLocalTime = toZonedTime(photo.takenAt, timeZone);
+
+      // Check if it falls within the local day's bounds
+      const isWithinDay = photoLocalTime >= localDayStart && photoLocalTime <= localDayEnd;
+      const matches = photo.userId === userId && isWithinDay;
+
       console.log('Photo', photo.id, {
         photoUserId: photo.userId,
         requestedUserId: userId,
-        photoLocalDate,
-        targetDate,
+        photoLocal: format(photoLocalTime, 'yyyy-MM-dd HH:mm:ss'),
+        dayStart: format(localDayStart, 'yyyy-MM-dd HH:mm:ss'),
+        dayEnd: format(localDayEnd, 'yyyy-MM-dd HH:mm:ss'),
         matches
       });
+
       return matches;
     });
 
-    console.log('Filtered photos:', photos.length, 'for date:', targetDate);
+    console.log('Filtered photos:', photos.length, 'for date:', format(localDate, 'yyyy-MM-dd'));
     return photos;
   }
 

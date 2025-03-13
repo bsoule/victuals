@@ -8,7 +8,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatTime(date: Date): string {
-  return format(date, 'HH:mm');
+  // Convert UTC date to local timezone before formatting
+  const localDate = toZonedTime(date, Intl.DateTimeFormat().resolvedOptions().timeZone);
+  return format(localDate, 'HH:mm');
 }
 
 export function formatDate(date: Date): string {
