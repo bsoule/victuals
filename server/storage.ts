@@ -96,25 +96,30 @@ export class MemStorage implements IStorage {
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
     console.log('Fetching photos for user:', userId, 'date:', date);
-    // Convert the target date to local time for comparison
-    const targetDate = format(normalizeToLocalDate(date), 'yyyy-MM-dd');
+
+    // Convert input date to UTC midnight of that day
+    const localMidnight = startOfDay(toZonedTime(date, Intl.DateTimeFormat().resolvedOptions().timeZone));
+    const targetDate = format(localMidnight, 'yyyy-MM-dd');
 
     const allPhotos = Array.from(this.photos.values());
     console.log('All photos before filtering:', allPhotos.map(p => ({ 
       id: p.id, 
       userId: p.userId,
       takenAt: p.takenAt,
-      date: format(normalizeToLocalDate(p.takenAt), 'yyyy-MM-dd')
+      localDate: format(toZonedTime(p.takenAt, Intl.DateTimeFormat().resolvedOptions().timeZone), 'yyyy-MM-dd')
     })));
 
     const photos = allPhotos.filter(photo => {
-      // Convert each photo's UTC time to local time for comparison
-      const photoDate = format(normalizeToLocalDate(photo.takenAt), 'yyyy-MM-dd');
-      const matches = photo.userId === userId && photoDate === targetDate;
+      // Convert photo's UTC timestamp to local date for comparison
+      const photoLocalDate = format(
+        toZonedTime(photo.takenAt, Intl.DateTimeFormat().resolvedOptions().timeZone),
+        'yyyy-MM-dd'
+      );
+      const matches = photo.userId === userId && photoLocalDate === targetDate;
       console.log('Photo', photo.id, {
         photoUserId: photo.userId,
         requestedUserId: userId,
-        photoDate,
+        photoLocalDate,
         targetDate,
         matches
       });
