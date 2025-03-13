@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { formatDate } from '@/lib/utils';
+import { formatDate, normalizeDate } from '@/lib/utils';
 import { type Comment } from '@shared/schema';
 
 interface CommentsProps {
@@ -50,7 +50,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
         userId: diaryOwnerId, // The diary owner's ID
         username: username, // The logged-in user's username
         content: content.trim(),
-        date: currentDate.toISOString()
+        date: normalizeDate(currentDate).toISOString()
       });
       return res.json();
     },

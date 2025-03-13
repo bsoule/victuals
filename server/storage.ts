@@ -1,5 +1,5 @@
 import { users, photos, comments, type User, type InsertUser, type Photo, type InsertPhoto, type Comment, type InsertComment } from "@shared/schema";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -74,9 +74,9 @@ export class MemStorage implements IStorage {
   }
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
-    const targetDate = format(date, 'yyyy-MM-dd');
+    const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
     return Array.from(this.photos.values()).filter(photo => {
-      const photoDate = format(photo.takenAt, 'yyyy-MM-dd');
+      const photoDate = format(startOfDay(photo.takenAt), 'yyyy-MM-dd');
       return photo.userId === userId && photoDate === targetDate;
     });
   }
@@ -89,7 +89,7 @@ export class MemStorage implements IStorage {
       username: insertComment.username,
       content: insertComment.content,
       createdAt: new Date(),
-      date: new Date(insertComment.date)
+      date: startOfDay(new Date(insertComment.date))
     };
     console.log('Creating new comment:', newComment); // Debug log
     this.comments.set(id, newComment);
@@ -98,9 +98,9 @@ export class MemStorage implements IStorage {
 
   async getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]> {
     console.log('Fetching comments for user:', userId, 'date:', date); // Debug log
-    const targetDate = format(date, 'yyyy-MM-dd');
+    const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
     const comments = Array.from(this.comments.values()).filter(comment => {
-      const commentDate = format(comment.date, 'yyyy-MM-dd');
+      const commentDate = format(startOfDay(comment.date), 'yyyy-MM-dd');
       const match = comment.userId === userId && commentDate === targetDate;
       console.log('Comment:', comment, 'matches:', match); // Debug log
       return match;
