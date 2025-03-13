@@ -1,5 +1,11 @@
 import { users, photos, comments, type User, type InsertUser, type Photo, type InsertPhoto, type Comment, type InsertComment } from "@shared/schema";
 import { format, startOfDay } from "date-fns";
+import { toZonedTime } from 'date-fns-tz';
+
+// Helper function to normalize dates to user's timezone
+function normalizeToLocalDate(date: Date): Date {
+  return startOfDay(toZonedTime(date, Intl.DateTimeFormat().resolvedOptions().timeZone));
+}
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -56,16 +62,23 @@ export class MemStorage implements IStorage {
 
   async createPhoto(insertPhoto: InsertPhoto): Promise<Photo> {
     const id = this.currentPhotoId++;
+    const now = new Date();
+    // Convert the current time to user's local timezone
+    const localNow = toZonedTime(now, Intl.DateTimeFormat().resolvedOptions().timeZone);
+
     const photo: Photo = { 
       id,
-      userId: Number(insertPhoto.userId), // Ensure userId is properly converted to number
+      userId: Number(insertPhoto.userId),
       imageUrl: insertPhoto.imageUrl,
-      takenAt: new Date(),
+      takenAt: localNow,
       description: insertPhoto.description || null
     };
-    console.log('Creating photo:', { ...photo, imageUrl: '[truncated]' }); // Debug log
+    console.log('Creating photo:', { 
+      ...photo, 
+      imageUrl: '[truncated]',
+      takenAt: format(photo.takenAt, 'yyyy-MM-dd HH:mm:ss xxx')
+    }); 
     this.photos.set(id, photo);
-
     return photo;
   }
 
@@ -85,18 +98,18 @@ export class MemStorage implements IStorage {
   }
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
-    console.log('Fetching photos for user:', userId, 'date:', date); // Debug log
-    const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
+    console.log('Fetching photos for user:', userId, 'date:', date);
+    const targetDate = format(normalizeToLocalDate(date), 'yyyy-MM-dd');
     const allPhotos = Array.from(this.photos.values());
     console.log('All photos before filtering:', allPhotos.map(p => ({ 
       id: p.id, 
       userId: p.userId,
       takenAt: p.takenAt,
-      date: format(startOfDay(p.takenAt), 'yyyy-MM-dd')
-    }))); // Debug log showing formatted dates
+      date: format(normalizeToLocalDate(p.takenAt), 'yyyy-MM-dd')
+    })));
 
     const photos = allPhotos.filter(photo => {
-      const photoDate = format(startOfDay(photo.takenAt), 'yyyy-MM-dd');
+      const photoDate = format(normalizeToLocalDate(photo.takenAt), 'yyyy-MM-dd');
       const matches = photo.userId === userId && photoDate === targetDate;
       console.log('Photo', photo.id, {
         photoUserId: photo.userId,
@@ -108,7 +121,7 @@ export class MemStorage implements IStorage {
       return matches;
     });
 
-    console.log('Filtered photos:', photos.length, 'for date:', targetDate); // Debug log
+    console.log('Filtered photos:', photos.length, 'for date:', targetDate);
     return photos;
   }
 
@@ -120,7 +133,7 @@ export class MemStorage implements IStorage {
       username: insertComment.username,
       content: insertComment.content,
       createdAt: new Date(),
-      date: startOfDay(new Date(insertComment.date))
+      date: normalizeToLocalDate(new Date(insertComment.date))
     };
     console.log('Creating new comment:', newComment); 
     this.comments.set(id, newComment);
@@ -129,9 +142,9 @@ export class MemStorage implements IStorage {
 
   async getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]> {
     console.log('Fetching comments for user:', userId, 'date:', date); 
-    const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
+    const targetDate = format(normalizeToLocalDate(date), 'yyyy-MM-dd');
     const comments = Array.from(this.comments.values()).filter(comment => {
-      const commentDate = format(startOfDay(comment.date), 'yyyy-MM-dd');
+      const commentDate = format(normalizeToLocalDate(comment.date), 'yyyy-MM-dd');
       const match = comment.userId === userId && commentDate === targetDate;
       console.log('Comment:', comment, 'matches:', match); 
       return match;
