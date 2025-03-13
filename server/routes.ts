@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Fetching photos for:', { username, date }); // Debug log
 
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserByUsername(username.toLowerCase());
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
