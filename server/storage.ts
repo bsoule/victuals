@@ -62,15 +62,12 @@ export class MemStorage implements IStorage {
 
   async createPhoto(insertPhoto: InsertPhoto): Promise<Photo> {
     const id = this.currentPhotoId++;
-    const now = new Date();
-    // Convert the current time to user's local timezone
-    const localNow = toZonedTime(now, Intl.DateTimeFormat().resolvedOptions().timeZone);
-
+    // Store in UTC time
     const photo: Photo = { 
       id,
       userId: Number(insertPhoto.userId),
       imageUrl: insertPhoto.imageUrl,
-      takenAt: localNow,
+      takenAt: new Date(), // Store in UTC
       description: insertPhoto.description || null
     };
     console.log('Creating photo:', { 
@@ -99,7 +96,9 @@ export class MemStorage implements IStorage {
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
     console.log('Fetching photos for user:', userId, 'date:', date);
+    // Convert the target date to local time for comparison
     const targetDate = format(normalizeToLocalDate(date), 'yyyy-MM-dd');
+
     const allPhotos = Array.from(this.photos.values());
     console.log('All photos before filtering:', allPhotos.map(p => ({ 
       id: p.id, 
@@ -109,6 +108,7 @@ export class MemStorage implements IStorage {
     })));
 
     const photos = allPhotos.filter(photo => {
+      // Convert each photo's UTC time to local time for comparison
       const photoDate = format(normalizeToLocalDate(photo.takenAt), 'yyyy-MM-dd');
       const matches = photo.userId === userId && photoDate === targetDate;
       console.log('Photo', photo.id, {
