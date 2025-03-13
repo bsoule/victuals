@@ -83,14 +83,7 @@ export class MemStorage implements IStorage {
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
     const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
     return Array.from(this.photos.values()).filter(photo => {
-      const photoDate = format(startOfDay(new Date(photo.takenAt)), 'yyyy-MM-dd');
-      console.log('Comparing dates:', {
-        targetDate,
-        photoDate,
-        photoId: photo.id,
-        userId: photo.userId,
-        requestedUserId: userId
-      });
+      const photoDate = format(startOfDay(photo.takenAt), 'yyyy-MM-dd');
       return photo.userId === userId && photoDate === targetDate;
     });
   }

@@ -9,8 +9,6 @@ export function Navigation() {
   const handleHome = () => {
     if (username) {
       setLocation(`/${username}`);
-    } else {
-      setLocation('/');
     }
   };
 
@@ -20,7 +18,7 @@ export function Navigation() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 border-b bg-background">
+    <div className="flex items-center justify-between p-4 border-b">
       <Button 
         variant="ghost" 
         size="icon"
@@ -28,7 +26,7 @@ export function Navigation() {
       >
         <Home className="h-5 w-5" />
       </Button>
-
+      
       <Button 
         variant="ghost" 
         size="icon"

@@ -63,21 +63,13 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
         await apiRequest('DELETE', `/api/photos/${photoToReplace}`);
       }
 
-      console.log('Uploading photo with formData:', {
-        userId: user?.id,
-        description
-      });
-
       const res = await apiRequest('POST', '/api/photos', formData);
-      const data = await res.json();
-      console.log('Upload response:', data);
-      return data;
+      return res.json();
     },
     onSuccess: () => {
       // Invalidate today's photos query
-      console.log('Invalidating query for today:', formatDate(new Date()));
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/users', username, 'photos'] 
+      queryClient.invalidateQueries({
+        queryKey: ['/api/users', username, 'photos', formatDate(new Date())]
       });
       toast({
         title: "Success",
@@ -92,7 +84,6 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
       setShowDescriptionDialog(false);
     },
     onError: (error) => {
-      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: error.message,

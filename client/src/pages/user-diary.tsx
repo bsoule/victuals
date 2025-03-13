@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { add, sub } from 'date-fns';
 import { PhotoGrid } from '@/components/photo-grid';
 import { DateNavigation } from '@/components/date-navigation';
@@ -8,46 +9,37 @@ import { Comments } from '@/components/comments';
 import { formatDate } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
-import NotFound from '@/pages/not-found';
+import NotFound from '@/pages/not-found'; // Fixed import path
 
-interface UserDiaryProps {
-  username: string;
-}
-
-export default function UserDiary({ username }: UserDiaryProps) {
+export default function UserDiary() {
+  const { username } = useParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
 
   // Get the diary owner's user ID
-  const { data: user, error: userError } = useQuery({
+  const { data: user, isError } = useQuery({
     queryKey: ['/api/users', username],
     queryFn: async () => {
       const res = await apiRequest('POST', '/api/users', { username });
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'User not found');
+        throw new Error('User not found');
       }
-      return data;
+      return res.json();
     }
   });
 
-  // Show 404 if user doesn't exist
-  if (userError) {
+  if (isError) {
     return <NotFound />;
   }
 
   const { data: photos, isLoading } = useQuery<Photo[]>({
     queryKey: ['/api/users', username, 'photos', formatDate(currentDate)],
     queryFn: async () => {
-      console.log('Fetching photos for date:', formatDate(currentDate));
       const res = await fetch(`/api/users/${username}/photos?date=${formatDate(currentDate)}`);
       if (!res.ok) throw new Error('Failed to fetch photos');
-      const data = await res.json();
-      console.log('Fetched photos:', data);
-      return data;
-    },
-    enabled: !!user // Only fetch photos if we have a valid user
+      return res.json();
+    }
   });
 
   const handlePreviousDay = () => {
@@ -73,11 +65,6 @@ export default function UserDiary({ username }: UserDiaryProps) {
     setReplacementMode(null);
   };
 
-  // Don't render anything until we confirm user exists
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background pt-16 pb-4">
       <div className="max-w-lg mx-auto px-4">
@@ -99,11 +86,11 @@ export default function UserDiary({ username }: UserDiaryProps) {
         />
 
         <div className="pb-32">
-          <Comments currentDate={currentDate} diaryOwnerId={user.id} />
+          {user && <Comments currentDate={currentDate} diaryOwnerId={user.id} />}
         </div>
 
         <PhotoUpload
-          username={username}
+          username={username!}
           photoToReplace={photoToReplace}
           replacementMode={replacementMode}
           onPhotoReplaced={handlePhotoReplaced}
