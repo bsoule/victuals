@@ -104,7 +104,8 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
       if (!username) throw new Error('User not found');
 
       await apiRequest('DELETE', `/api/comments/${id}`, {
-        username // For authorization
+        username, // For authorization
+        diaryOwnerId // Pass the diary owner's ID
       });
     },
     onSuccess: () => {
@@ -195,9 +196,9 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                       {new Date(comment.createdAt).toLocaleTimeString()}
                     </p>
                   </div>
-                  {/* Show edit/delete buttons only for the comment author */}
-                  {comment.username === username && !editingCommentId && (
-                    <div className="flex gap-1">
+                  <div className="flex gap-1">
+                    {/* Show edit button only for the comment author */}
+                    {comment.username === username && !editingCommentId && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -205,6 +206,9 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
+                    )}
+                    {/* Show delete button if user is either comment author or diary owner */}
+                    {(comment.username === username || comment.userId === diaryOwnerId) && !editingCommentId && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -213,8 +217,8 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -164,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/comments/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      const { username } = req.body;
+      const { username, diaryOwnerId } = req.body;
 
       // Get the existing comment
       const existingComment = await storage.getComment(parseInt(id));
@@ -172,8 +172,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Comment not found' });
       }
 
-      // Check if the user is the author of the comment
-      if (existingComment.username !== username) {
+      // Check if the user is either:
+      // 1. The author of the comment, OR
+      // 2. The owner of the diary where the comment was posted
+      const isCommentAuthor = existingComment.username === username;
+      const isDiaryOwner = existingComment.userId === diaryOwnerId;
+
+      if (!isCommentAuthor && !isDiaryOwner) {
         return res.status(403).json({ error: 'Not authorized to delete this comment' });
       }
 
