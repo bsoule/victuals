@@ -24,6 +24,15 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   // Get the stored username from localStorage (the logged-in user)
   const username = localStorage.getItem('food-diary-username')?.toLowerCase();
 
+  // Get the user ID for this username
+  const { data: user } = useQuery({
+    queryKey: ['/api/users', username],
+    queryFn: async () => {
+      const res = await apiRequest('POST', '/api/users', { username });
+      return res.json();
+    }
+  });
+
   // Query to get comments for the diary owner's date
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
     queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId],
@@ -208,7 +217,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                       </Button>
                     )}
                     {/* Show delete button if user is either comment author or diary owner */}
-                    {(comment.username.toLowerCase() === username || diaryOwnerId === comment.userId) && !editingCommentId && (
+                    {(comment.username.toLowerCase() === username || user?.id === diaryOwnerId) && !editingCommentId && (
                       <Button
                         size="icon"
                         variant="ghost"
