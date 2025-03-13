@@ -11,6 +11,9 @@ export interface IStorage {
   getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]>;
   createComment(comment: InsertComment): Promise<Comment>;
   getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]>;
+  getComment(id: number): Promise<Comment | undefined>;
+  updateComment(id: number, updates: { content: string }): Promise<Comment>;
+  deleteComment(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -107,6 +110,25 @@ export class MemStorage implements IStorage {
     });
     console.log('Found comments:', comments); // Debug log
     return comments;
+  }
+
+  async getComment(id: number): Promise<Comment | undefined> {
+    return this.comments.get(id);
+  }
+
+  async updateComment(id: number, updates: { content: string }): Promise<Comment> {
+    const comment = this.comments.get(id);
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+
+    const updatedComment = { ...comment, ...updates };
+    this.comments.set(id, updatedComment);
+    return updatedComment;
+  }
+
+  async deleteComment(id: number): Promise<void> {
+    this.comments.delete(id);
   }
 }
 

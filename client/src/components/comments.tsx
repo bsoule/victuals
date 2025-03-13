@@ -7,14 +7,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { formatDate, normalizeDate } from '@/lib/utils';
 import { type Comment } from '@shared/schema';
+import { Pencil, Trash2, X, Check } from 'lucide-react';
 
 interface CommentsProps {
   currentDate: Date;
-  diaryOwnerId: number; // The ID of the user whose diary we're viewing
+  diaryOwnerId: number;
 }
 
 export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -25,30 +28,24 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
     queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId],
     queryFn: async () => {
-      console.log('Fetching comments for date:', formatDate(currentDate), 'and user:', diaryOwnerId); // Debug log
+      console.log('Fetching comments for date:', formatDate(currentDate), 'and user:', diaryOwnerId);
       const res = await fetch(`/api/comments?date=${formatDate(currentDate)}&userId=${diaryOwnerId}`);
       if (!res.ok) throw new Error('Failed to fetch comments');
       const data = await res.json();
-      console.log('Fetched comments:', data); // Debug log
+      console.log('Fetched comments:', data);
       return data;
     },
     enabled: !!diaryOwnerId
   });
 
   // Mutation to add a new comment
-  const mutation = useMutation({
+  const addMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!username) throw new Error('User not found');
-      console.log('Submitting comment with data:', {
-        userId: diaryOwnerId,
-        username,
-        content: content.trim(),
-        date: currentDate
-      }); // Debug log
 
       const res = await apiRequest('POST', '/api/comments', {
-        userId: diaryOwnerId, // The diary owner's ID
-        username: username, // The logged-in user's username
+        userId: diaryOwnerId,
+        username: username,
         content: content.trim(),
         date: normalizeDate(currentDate).toISOString()
       });
@@ -72,10 +69,79 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
     },
   });
 
+  // Mutation to edit a comment
+  const editMutation = useMutation({
+    mutationFn: async ({ id, content }: { id: number; content: string }) => {
+      if (!username) throw new Error('User not found');
+
+      const res = await apiRequest('PATCH', `/api/comments/${id}`, {
+        content: content.trim(),
+        username // For authorization
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId] });
+      setEditingCommentId(null);
+      setEditingContent('');
+      toast({
+        title: "Success",
+        description: "Comment updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update comment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to delete a comment
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      if (!username) throw new Error('User not found');
+
+      await apiRequest('DELETE', `/api/comments/${id}`, {
+        username // For authorization
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId] });
+      toast({
+        title: "Success",
+        description: "Comment deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete comment",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    mutation.mutate(newComment);
+    addMutation.mutate(newComment);
+  };
+
+  const startEditing = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingCommentId(null);
+    setEditingContent('');
+  };
+
+  const submitEdit = (id: number) => {
+    if (!editingContent.trim()) return;
+    editMutation.mutate({ id, content: editingContent });
   };
 
   if (!username) {
@@ -99,11 +165,56 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                     <p className="text-sm font-medium text-primary mb-1">
                       {comment.username}
                     </p>
-                    <p className="text-sm">{comment.content}</p>
+                    {editingCommentId === comment.id ? (
+                      <div className="flex gap-2">
+                        <Input
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => submitEdit(comment.id)}
+                          disabled={editMutation.isPending}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={cancelEditing}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm">{comment.content}</p>
+                    )}
                     <p className="text-xs text-muted-foreground mt-1">
                       {new Date(comment.createdAt).toLocaleTimeString()}
                     </p>
                   </div>
+                  {/* Show edit/delete buttons only for the comment author */}
+                  {comment.username === username && !editingCommentId && (
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => startEditing(comment)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => deleteMutation.mutate(comment.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -123,9 +234,9 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
         />
         <Button
           type="submit"
-          disabled={mutation.isPending || !newComment.trim()}
+          disabled={addMutation.isPending || !newComment.trim()}
         >
-          {mutation.isPending ? "Posting..." : "Post"}
+          {addMutation.isPending ? "Posting..." : "Post"}
         </Button>
       </form>
     </div>

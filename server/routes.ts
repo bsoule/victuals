@@ -138,6 +138,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/comments/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { content, username } = req.body;
+
+      // Get the existing comment
+      const existingComment = await storage.getComment(parseInt(id));
+      if (!existingComment) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+
+      // Check if the user is the author of the comment
+      if (existingComment.username !== username) {
+        return res.status(403).json({ error: 'Not authorized to edit this comment' });
+      }
+
+      const comment = await storage.updateComment(parseInt(id), { content });
+      res.json(comment);
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to update comment' });
+    }
+  });
+
+  app.delete('/api/comments/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { username } = req.body;
+
+      // Get the existing comment
+      const existingComment = await storage.getComment(parseInt(id));
+      if (!existingComment) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+
+      // Check if the user is the author of the comment
+      if (existingComment.username !== username) {
+        return res.status(403).json({ error: 'Not authorized to delete this comment' });
+      }
+
+      await storage.deleteComment(parseInt(id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to delete comment' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
