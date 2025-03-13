@@ -75,9 +75,9 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
     },
     onSuccess: () => {
       // Invalidate today's photos query
-      console.log('Invalidating query for date:', formatDate(new Date()));
-      queryClient.invalidateQueries({
-        queryKey: ['/api/users', username, 'photos', formatDate(new Date())]
+      console.log('Invalidating query for today:', formatDate(new Date()));
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/users', username, 'photos'] 
       });
       toast({
         title: "Success",
