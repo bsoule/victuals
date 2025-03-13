@@ -20,19 +20,20 @@ export default function UserDiary({ username }: UserDiaryProps) {
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
 
   // Get the diary owner's user ID
-  const { data: user, isError } = useQuery({
+  const { data: user, error: userError } = useQuery({
     queryKey: ['/api/users', username],
     queryFn: async () => {
       const res = await apiRequest('POST', '/api/users', { username });
+      const data = await res.json();
       if (!res.ok) {
-        throw new Error('User not found');
+        throw new Error(data.error || 'User not found');
       }
-      return res.json();
+      return data;
     }
   });
 
   // Show 404 if user doesn't exist
-  if (isError) {
+  if (userError) {
     return <NotFound />;
   }
 
