@@ -208,7 +208,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                       </Button>
                     )}
                     {/* Show delete button if user is either comment author or diary owner */}
-                    {(comment.username.toLowerCase() === username || comment.userId === diaryOwnerId) && !editingCommentId && (
+                    {(comment.username.toLowerCase() === username || diaryOwnerId === comment.userId) && !editingCommentId && (
                       <Button
                         size="icon"
                         variant="ghost"

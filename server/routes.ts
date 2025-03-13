@@ -175,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if the user is either:
       // 1. The author of the comment, OR
       // 2. The owner of the diary where the comment was posted
-      const isCommentAuthor = existingComment.username === username;
+      const isCommentAuthor = existingComment.username.toLowerCase() === username.toLowerCase();
       const isDiaryOwner = existingComment.userId === diaryOwnerId;
 
       if (!isCommentAuthor && !isDiaryOwner) {
