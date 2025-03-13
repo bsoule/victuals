@@ -35,13 +35,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(existingUser);
       }
 
-      // Only create a new user when explicitly requested (i.e. from the home page)
-      if (req.query.create === 'true') {
-        const user = await storage.createUser(userData);
-        return res.json(user);
-      }
-
-      return res.status(404).json({ error: 'User not found' });
+      const user = await storage.createUser(userData);
+      res.json(user);
     } catch (error) {
       res.status(400).json({ error: 'Invalid user data' });
     }

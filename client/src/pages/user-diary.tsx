@@ -8,8 +8,6 @@ import { PhotoUpload } from '@/components/photo-upload';
 import { Comments } from '@/components/comments';
 import { formatDate } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
-import NotFound from '@/pages/not-found'; // Fixed import path
 
 export default function UserDiary() {
   const { username } = useParams();
@@ -18,20 +16,14 @@ export default function UserDiary() {
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
 
   // Get the diary owner's user ID
-  const { data: user, isError } = useQuery({
+  const { data: user } = useQuery({
     queryKey: ['/api/users', username],
     queryFn: async () => {
-      const res = await apiRequest('POST', '/api/users', { username });
-      if (!res.ok) {
-        throw new Error('User not found');
-      }
+      const res = await fetch(`/api/users/${username}`);
+      if (!res.ok) throw new Error('Failed to fetch user');
       return res.json();
     }
   });
-
-  if (isError) {
-    return <NotFound />;
-  }
 
   const { data: photos, isLoading } = useQuery<Photo[]>({
     queryKey: ['/api/users', username, 'photos', formatDate(currentDate)],
@@ -66,7 +58,7 @@ export default function UserDiary() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-16 pb-4">
+    <div className="min-h-screen bg-background pt-16 pb-4"> {/* Added top padding */}
       <div className="max-w-lg mx-auto px-4">
         <h1 className="text-2xl font-bold mb-4 text-center">
           {username}'s Food Diary
@@ -78,19 +70,19 @@ export default function UserDiary() {
           onNext={handleNextDay}
         />
 
-        <PhotoGrid
-          photos={photos || []}
+        <PhotoGrid 
+          photos={photos || []} 
           isLoading={isLoading}
           onTakePhoto={handleTakePhoto}
           onChooseFromGallery={handleChooseFromGallery}
         />
 
-        <div className="pb-32">
+        <div className="pb-32"> {/* Add padding at the bottom to avoid overlap with floating buttons */}
           {user && <Comments currentDate={currentDate} diaryOwnerId={user.id} />}
         </div>
 
-        <PhotoUpload
-          username={username!}
+        <PhotoUpload 
+          username={username!} 
           photoToReplace={photoToReplace}
           replacementMode={replacementMode}
           onPhotoReplaced={handlePhotoReplaced}
