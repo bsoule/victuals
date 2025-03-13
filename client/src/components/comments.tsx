@@ -25,9 +25,12 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
     queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId],
     queryFn: async () => {
+      console.log('Fetching comments for date:', formatDate(currentDate), 'and user:', diaryOwnerId); // Debug log
       const res = await fetch(`/api/comments?date=${formatDate(currentDate)}&userId=${diaryOwnerId}`);
       if (!res.ok) throw new Error('Failed to fetch comments');
-      return res.json();
+      const data = await res.json();
+      console.log('Fetched comments:', data); // Debug log
+      return data;
     },
     enabled: !!diaryOwnerId
   });
@@ -36,6 +39,12 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   const mutation = useMutation({
     mutationFn: async (content: string) => {
       if (!username) throw new Error('User not found');
+      console.log('Submitting comment with data:', {
+        userId: diaryOwnerId,
+        username,
+        content: content.trim(),
+        date: currentDate
+      }); // Debug log
 
       const res = await apiRequest('POST', '/api/comments', {
         userId: diaryOwnerId, // The diary owner's ID
@@ -46,7 +55,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/comments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/comments', formatDate(currentDate), diaryOwnerId] });
       setNewComment('');
       toast({
         title: "Success",
@@ -112,8 +121,8 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
           placeholder="Add a comment..."
           className="flex-1"
         />
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={mutation.isPending || !newComment.trim()}
         >
           {mutation.isPending ? "Posting..." : "Post"}
