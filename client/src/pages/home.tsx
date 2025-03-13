@@ -21,10 +21,25 @@ export default function Home() {
 
   // Check for existing username on mount
   useEffect(() => {
-    const savedUsername = localStorage.getItem(STORAGE_KEY);
-    if (savedUsername) {
-      setLocation(`/${savedUsername}`);
-    }
+    const checkExistingUser = async () => {
+      const savedUsername = localStorage.getItem(STORAGE_KEY);
+      if (savedUsername) {
+        try {
+          const res = await apiRequest('POST', '/api/users', { username: savedUsername });
+          if (res.ok) {
+            const user = await res.json();
+            setLocation(`/${user.username}`);
+          } else {
+            // If user doesn't exist, remove from localStorage
+            localStorage.removeItem(STORAGE_KEY);
+          }
+        } catch (error) {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+    };
+
+    checkExistingUser();
   }, [setLocation]);
 
   const mutation = useMutation({
