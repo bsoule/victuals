@@ -40,9 +40,12 @@ export default function UserDiary({ username }: UserDiaryProps) {
   const { data: photos, isLoading } = useQuery<Photo[]>({
     queryKey: ['/api/users', username, 'photos', formatDate(currentDate)],
     queryFn: async () => {
+      console.log('Fetching photos for date:', formatDate(currentDate));
       const res = await fetch(`/api/users/${username}/photos?date=${formatDate(currentDate)}`);
       if (!res.ok) throw new Error('Failed to fetch photos');
-      return res.json();
+      const data = await res.json();
+      console.log('Fetched photos:', data);
+      return data;
     },
     enabled: !!user // Only fetch photos if we have a valid user
   });

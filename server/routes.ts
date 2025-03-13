@@ -53,6 +53,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('No file uploaded');
       }
 
+      console.log('Creating photo with data:', {
+        userId: req.body.userId,
+        description: req.body.description
+      });
+
       // In a real app, we'd upload to cloud storage
       // For demo, we'll create a data URL
       const base64Image = req.file.buffer.toString('base64');
@@ -65,8 +70,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const photo = await storage.createPhoto(photoData);
+      console.log('Created photo:', photo);
       res.json(photo);
     } catch (error) {
+      console.error('Photo upload error:', error);
       res.status(400).json({ error: 'Invalid photo data' });
     }
   });
