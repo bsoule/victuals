@@ -58,8 +58,8 @@ export default function UserDiary() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pt-16 pb-4"> {/* Added top padding */}
+      <div className="max-w-lg mx-auto px-4">
         <h1 className="text-2xl font-bold mb-4 text-center">
           {username}'s Food Diary
         </h1>
