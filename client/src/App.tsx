@@ -8,16 +8,26 @@ import UserDiary from "@/pages/user-diary";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  // Always show navigation except on home page
-  const isHomePage = window.location.pathname === '/';
-
   return (
     <>
-      {!isHomePage && <Navigation />}
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/:username" component={UserDiary} />
-        <Route component={NotFound} />
+        <Route path="/:username">
+          {(params) => (
+            <>
+              <Navigation />
+              <UserDiary username={params.username} />
+            </>
+          )}
+        </Route>
+        <Route>
+          {() => (
+            <>
+              <Navigation />
+              <NotFound />
+            </>
+          )}
+        </Route>
       </Switch>
       <Toaster />
     </>

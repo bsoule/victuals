@@ -1,6 +1,5 @@
-import { useParams } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { add, sub } from 'date-fns';
 import { PhotoGrid } from '@/components/photo-grid';
 import { DateNavigation } from '@/components/date-navigation';
@@ -11,8 +10,11 @@ import { type Photo } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import NotFound from '@/pages/not-found';
 
-export default function UserDiary() {
-  const { username } = useParams();
+interface UserDiaryProps {
+  username: string;
+}
+
+export default function UserDiary({ username }: UserDiaryProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
@@ -93,11 +95,11 @@ export default function UserDiary() {
         />
 
         <div className="pb-32">
-          {user && <Comments currentDate={currentDate} diaryOwnerId={user.id} />}
+          <Comments currentDate={currentDate} diaryOwnerId={user.id} />
         </div>
 
         <PhotoUpload
-          username={username!}
+          username={username}
           photoToReplace={photoToReplace}
           replacementMode={replacementMode}
           onPhotoReplaced={handlePhotoReplaced}
