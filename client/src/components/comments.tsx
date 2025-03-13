@@ -22,7 +22,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
   const queryClient = useQueryClient();
 
   // Get the stored username from localStorage (the logged-in user)
-  const username = localStorage.getItem('food-diary-username');
+  const username = localStorage.getItem('food-diary-username')?.toLowerCase();
 
   // Query to get comments for the diary owner's date
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
@@ -198,7 +198,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                   </div>
                   <div className="flex gap-1">
                     {/* Show edit button only for the comment author */}
-                    {comment.username === username && !editingCommentId && (
+                    {comment.username.toLowerCase() === username && !editingCommentId && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -208,7 +208,7 @@ export function Comments({ currentDate, diaryOwnerId }: CommentsProps) {
                       </Button>
                     )}
                     {/* Show delete button if user is either comment author or diary owner */}
-                    {(comment.username === username || comment.userId === diaryOwnerId) && !editingCommentId && (
+                    {(comment.username.toLowerCase() === username || comment.userId === diaryOwnerId) && !editingCommentId && (
                       <Button
                         size="icon"
                         variant="ghost"

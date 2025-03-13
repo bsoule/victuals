@@ -39,13 +39,17 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.username.toLowerCase() === username.toLowerCase(),
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser,
+      username: insertUser.username.toLowerCase(), 
+      id 
+    };
     this.users.set(id, user);
     return user;
   }
@@ -94,21 +98,21 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       date: startOfDay(new Date(insertComment.date))
     };
-    console.log('Creating new comment:', newComment); // Debug log
+    console.log('Creating new comment:', newComment); 
     this.comments.set(id, newComment);
     return newComment;
   }
 
   async getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]> {
-    console.log('Fetching comments for user:', userId, 'date:', date); // Debug log
+    console.log('Fetching comments for user:', userId, 'date:', date); 
     const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
     const comments = Array.from(this.comments.values()).filter(comment => {
       const commentDate = format(startOfDay(comment.date), 'yyyy-MM-dd');
       const match = comment.userId === userId && commentDate === targetDate;
-      console.log('Comment:', comment, 'matches:', match); // Debug log
+      console.log('Comment:', comment, 'matches:', match); 
       return match;
     });
-    console.log('Found comments:', comments); // Debug log
+    console.log('Found comments:', comments); 
     return comments;
   }
 

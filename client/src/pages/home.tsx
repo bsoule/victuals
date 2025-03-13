@@ -29,7 +29,7 @@ export default function Home() {
 
   const mutation = useMutation({
     mutationFn: async (username: string) => {
-      const res = await apiRequest('POST', '/api/users', { username });
+      const res = await apiRequest('POST', '/api/users', { username: username.toLowerCase() });
       return res.json();
     },
     onSuccess: (data) => {
