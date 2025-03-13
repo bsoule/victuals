@@ -1,35 +1,14 @@
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Home, LogOut } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 
 export function Navigation() {
   const [, setLocation] = useLocation();
-  const storedUsername = localStorage.getItem('food-diary-username')?.toLowerCase();
-
-  // Always run this query, but only if we have a username
-  const { data: user } = useQuery({
-    queryKey: ['/api/users', storedUsername],
-    queryFn: async () => {
-      if (!storedUsername) return null;
-      const res = await apiRequest('POST', '/api/users', { username: storedUsername });
-      if (!res.ok) {
-        localStorage.removeItem('food-diary-username');
-        return null;
-      }
-      return res.json();
-    },
-    enabled: !!storedUsername
-  });
+  const username = localStorage.getItem('food-diary-username')?.toLowerCase();
 
   const handleHome = () => {
-    if (user?.username) {
-      setLocation(`/${user.username}`);
-    } else {
-      // If no valid user, go to home page
-      localStorage.removeItem('food-diary-username');
-      setLocation('/');
+    if (username) {
+      setLocation(`/${username}`);
     }
   };
 
