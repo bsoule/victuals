@@ -1,11 +1,5 @@
 import { users, photos, comments, type User, type InsertUser, type Photo, type InsertPhoto, type Comment, type InsertComment } from "@shared/schema";
-import { format, startOfDay, endOfDay } from "date-fns";
-import { toZonedTime } from 'date-fns-tz';
-
-// Helper function to normalize dates to user's timezone
-function normalizeToLocalDate(date: Date): Date {
-  return startOfDay(toZonedTime(date, Intl.DateTimeFormat().resolvedOptions().timeZone));
-}
+import { format, startOfDay } from "date-fns";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -62,19 +56,11 @@ export class MemStorage implements IStorage {
 
   async createPhoto(insertPhoto: InsertPhoto): Promise<Photo> {
     const id = this.currentPhotoId++;
-    // Store in UTC time
     const photo: Photo = { 
+      ...insertPhoto, 
       id,
-      userId: Number(insertPhoto.userId),
-      imageUrl: insertPhoto.imageUrl,
-      takenAt: new Date(), // Store in UTC
-      description: insertPhoto.description || null
+      takenAt: new Date()
     };
-    console.log('Creating photo:', { 
-      ...photo, 
-      imageUrl: '[truncated]',
-      takenAt: format(photo.takenAt, 'yyyy-MM-dd HH:mm:ss xxx')
-    }); 
     this.photos.set(id, photo);
     return photo;
   }
@@ -95,48 +81,11 @@ export class MemStorage implements IStorage {
   }
 
   async getPhotosByUserAndDate(userId: number, date: Date): Promise<Photo[]> {
-    console.log('Fetching photos for user:', userId, 'date:', date);
-
-    // Get the local timezone
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Convert the input date to the local timezone
-    const localDate = toZonedTime(date, timeZone);
-
-    // Get the start and end of the local day
-    const localDayStart = startOfDay(localDate);
-    const localDayEnd = endOfDay(localDate);
-
-    const allPhotos = Array.from(this.photos.values());
-    console.log('All photos before filtering:', allPhotos.map(p => ({ 
-      id: p.id, 
-      userId: p.userId,
-      takenAt: p.takenAt,
-      localDate: format(toZonedTime(p.takenAt, timeZone), 'yyyy-MM-dd')
-    })));
-
-    const photos = allPhotos.filter(photo => {
-      // Convert the photo's UTC timestamp to local time
-      const photoLocalTime = toZonedTime(photo.takenAt, timeZone);
-
-      // Check if it falls within the local day's bounds
-      const isWithinDay = photoLocalTime >= localDayStart && photoLocalTime <= localDayEnd;
-      const matches = photo.userId === userId && isWithinDay;
-
-      console.log('Photo', photo.id, {
-        photoUserId: photo.userId,
-        requestedUserId: userId,
-        photoLocal: format(photoLocalTime, 'yyyy-MM-dd HH:mm:ss'),
-        dayStart: format(localDayStart, 'yyyy-MM-dd HH:mm:ss'),
-        dayEnd: format(localDayEnd, 'yyyy-MM-dd HH:mm:ss'),
-        matches
-      });
-
-      return matches;
+    const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
+    return Array.from(this.photos.values()).filter(photo => {
+      const photoDate = format(startOfDay(photo.takenAt), 'yyyy-MM-dd');
+      return photo.userId === userId && photoDate === targetDate;
     });
-
-    console.log('Filtered photos:', photos.length, 'for date:', format(localDate, 'yyyy-MM-dd'));
-    return photos;
   }
 
   async createComment(insertComment: InsertComment): Promise<Comment> {
@@ -147,7 +96,7 @@ export class MemStorage implements IStorage {
       username: insertComment.username,
       content: insertComment.content,
       createdAt: new Date(),
-      date: normalizeToLocalDate(new Date(insertComment.date))
+      date: startOfDay(new Date(insertComment.date))
     };
     console.log('Creating new comment:', newComment); 
     this.comments.set(id, newComment);
@@ -156,9 +105,9 @@ export class MemStorage implements IStorage {
 
   async getCommentsByUserAndDate(userId: number, date: Date): Promise<Comment[]> {
     console.log('Fetching comments for user:', userId, 'date:', date); 
-    const targetDate = format(normalizeToLocalDate(date), 'yyyy-MM-dd');
+    const targetDate = format(startOfDay(date), 'yyyy-MM-dd');
     const comments = Array.from(this.comments.values()).filter(comment => {
-      const commentDate = format(normalizeToLocalDate(comment.date), 'yyyy-MM-dd');
+      const commentDate = format(startOfDay(comment.date), 'yyyy-MM-dd');
       const match = comment.userId === userId && commentDate === targetDate;
       console.log('Comment:', comment, 'matches:', match); 
       return match;

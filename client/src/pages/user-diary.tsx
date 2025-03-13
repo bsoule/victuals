@@ -11,7 +11,7 @@ import { type Photo } from '@shared/schema';
 
 export default function UserDiary() {
   const { username } = useParams();
-  const [currentDate, setCurrentDate] = useState(new Date()); // Initialize with today's date
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [photoToReplace, setPhotoToReplace] = useState<number | null>(null);
   const [replacementMode, setReplacementMode] = useState<'camera' | 'gallery' | null>(null);
 
@@ -19,16 +19,16 @@ export default function UserDiary() {
   const { data: user } = useQuery({
     queryKey: ['/api/users', username],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${username.toLowerCase()}`);
+      const res = await fetch(`/api/users/${username}`);
       if (!res.ok) throw new Error('Failed to fetch user');
       return res.json();
     }
   });
 
   const { data: photos, isLoading } = useQuery<Photo[]>({
-    queryKey: ['/api/users', username?.toLowerCase(), 'photos', formatDate(currentDate)],
+    queryKey: ['/api/users', username, 'photos', formatDate(currentDate)],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${username?.toLowerCase()}/photos?date=${formatDate(currentDate)}`);
+      const res = await fetch(`/api/users/${username}/photos?date=${formatDate(currentDate)}`);
       if (!res.ok) throw new Error('Failed to fetch photos');
       return res.json();
     }

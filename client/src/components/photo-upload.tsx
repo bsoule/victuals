@@ -45,7 +45,7 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
   const { data: user } = useQuery({
     queryKey: ['/api/users', username],
     queryFn: async () => {
-      const res = await apiRequest('POST', '/api/users', { username: username.toLowerCase() });
+      const res = await apiRequest('POST', '/api/users', { username });
       return res.json();
     }
   });
@@ -67,9 +67,9 @@ export function PhotoUpload({ username, photoToReplace, replacementMode, onPhoto
       return res.json();
     },
     onSuccess: () => {
-      // Invalidate today's photos query to force a refresh
+      // Invalidate today's photos query
       queryClient.invalidateQueries({
-        queryKey: ['/api/users', username.toLowerCase(), 'photos', formatDate(new Date())]
+        queryKey: ['/api/users', username, 'photos', formatDate(new Date())]
       });
       toast({
         title: "Success",

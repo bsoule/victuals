@@ -4,8 +4,6 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPhotoSchema, insertCommentSchema } from "@shared/schema";
 import multer from "multer";
 import { z } from "zod";
-import { format, startOfDay } from 'date-fns';
-
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -55,31 +53,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const base64Image = req.file.buffer.toString('base64');
       const imageUrl = `data:${req.file.mimetype};base64,${base64Image}`;
 
-      console.log('Creating photo with data:', { 
-        userId: req.body.userId,
-        description: req.body.description,
-        date: new Date().toISOString()
-      }); // Debug log
-
       const photoData = insertPhotoSchema.parse({
         ...req.body,
         imageUrl,
         userId: parseInt(req.body.userId)
       });
 
-      console.log('Parsed photo data:', {
-        ...photoData,
-        imageUrl: '[truncated]'
-      });
-
       const photo = await storage.createPhoto(photoData);
-      console.log('Created photo:', {
-        ...photo,
-        imageUrl: '[truncated]'
-      });
       res.json(photo);
     } catch (error) {
-      console.error('Photo upload error:', error); // Debug log
       res.status(400).json({ error: 'Invalid photo data' });
     }
   });
@@ -110,31 +92,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username } = req.params;
       const { date } = req.query;
 
-      console.log('Fetching photos for:', { username, date }); // Debug log
-
-      const user = await storage.getUserByUsername(username.toLowerCase());
+      const user = await storage.getUserByUsername(username);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
 
       const targetDate = date ? new Date(date as string) : new Date();
-      console.log('Target date for photo fetch:', {
-        raw: targetDate,
-        formatted: format(startOfDay(targetDate), 'yyyy-MM-dd')
-      });
-
       const photos = await storage.getPhotosByUserAndDate(user.id, targetDate);
 
-      console.log('Found photos:', photos.length); // Debug log
       res.json(photos);
     } catch (error) {
-      console.error('Photo fetch error:', error); // Debug log
       res.status(400).json({ error: 'Invalid request' });
     }
   });
 
-  // Comments routes
-
+  // New comment routes
   app.post('/api/comments', async (req, res) => {
     try {
       console.log('Received comment data:', req.body); // Debug log
@@ -178,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if the user is the author of the comment
-      if (existingComment.username.toLowerCase() !== username.toLowerCase()) {
+      if (existingComment.username !== username) {
         return res.status(403).json({ error: 'Not authorized to edit this comment' });
       }
 
