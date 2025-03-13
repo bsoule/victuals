@@ -133,7 +133,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New comment routes
+  // Comments routes
+
   app.post('/api/comments', async (req, res) => {
     try {
       console.log('Received comment data:', req.body); // Debug log
@@ -177,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if the user is the author of the comment
-      if (existingComment.username !== username) {
+      if (existingComment.username.toLowerCase() !== username.toLowerCase()) {
         return res.status(403).json({ error: 'Not authorized to edit this comment' });
       }
 

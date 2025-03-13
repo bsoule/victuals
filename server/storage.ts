@@ -66,13 +66,6 @@ export class MemStorage implements IStorage {
     console.log('Creating photo:', { ...photo, imageUrl: '[truncated]' }); // Debug log
     this.photos.set(id, photo);
 
-    // Debug: Print all photos after creation
-    console.log('All photos in storage:', Array.from(this.photos.values()).map(p => ({ 
-      ...p, 
-      imageUrl: '[truncated]',
-      userId: p.userId
-    })));
-
     return photo;
   }
 
