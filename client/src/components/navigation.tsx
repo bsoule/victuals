@@ -9,6 +9,8 @@ export function Navigation() {
   const handleHome = () => {
     if (username) {
       setLocation(`/${username}`);
+    } else {
+      setLocation('/');
     }
   };
 

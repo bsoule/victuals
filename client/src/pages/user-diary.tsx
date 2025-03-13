@@ -9,7 +9,7 @@ import { Comments } from '@/components/comments';
 import { formatDate } from '@/lib/utils';
 import { type Photo } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
-import NotFound from '@/pages/not-found'; // Fixed import path
+import NotFound from '@/pages/not-found';
 
 export default function UserDiary() {
   const { username } = useParams();
@@ -29,6 +29,7 @@ export default function UserDiary() {
     }
   });
 
+  // Show 404 if user doesn't exist
   if (isError) {
     return <NotFound />;
   }
@@ -39,7 +40,8 @@ export default function UserDiary() {
       const res = await fetch(`/api/users/${username}/photos?date=${formatDate(currentDate)}`);
       if (!res.ok) throw new Error('Failed to fetch photos');
       return res.json();
-    }
+    },
+    enabled: !!user // Only fetch photos if we have a valid user
   });
 
   const handlePreviousDay = () => {
@@ -64,6 +66,11 @@ export default function UserDiary() {
     setPhotoToReplace(null);
     setReplacementMode(null);
   };
+
+  // Don't render anything until we confirm user exists
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-4">
